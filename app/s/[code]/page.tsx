@@ -1,17 +1,17 @@
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
-import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import DayFolderList from '@/components/ledger/DayFolderList';
 import MoneyText from '@/components/ledger/MoneyText';
 import MonthFilter from '@/components/public/MonthFilter';
 import PaymentHistory from '@/components/public/PaymentHistory';
 import { fetchPublic } from '@/lib/api';
-import { formatDateVn, formatMonthVn, weekdayVn } from '@/lib/format';
+import { formatDateVn, formatMonthVn } from '@/lib/format';
 import type { PublicLedgerResponse } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,7 @@ export const revalidate = 0;
 
 type Props = {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{ month?: string; page?: string }>;
 };
 
 export const metadata: Metadata = {
@@ -33,9 +33,15 @@ export const metadata: Metadata = {
  */
 export default async function PublicLedgerPage({ params, searchParams }: Props) {
   const { code } = await params;
-  const { month } = await searchParams;
+  const sp = await searchParams;
 
-  const query = month ? `?month=${encodeURIComponent(month)}` : '';
+  const paramsQs = new URLSearchParams();
+  if (sp.month) paramsQs.set('month', sp.month);
+  if (sp.page) paramsQs.set('page', sp.page);
+  // Omit status → BE defaults to all
+  const qs = paramsQs.toString();
+  const query = qs ? `?${qs}` : '';
+
   const { status, data } = await fetchPublic<PublicLedgerResponse>(`/api/public/${encodeURIComponent(code)}${query}`);
 
   if (status === 404) notFound();
@@ -53,6 +59,7 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
   }
 
   const hasDebt = data.totals.unsettled !== 0;
+  const month = sp.month;
 
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100dvh' }}>
@@ -108,59 +115,13 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
             </Stack>
           </Paper>
 
-          {/* ---------- Khoản theo ngày ---------- */}
+          {/* ---------- Khoản theo ngày (folder list) ---------- */}
           {data.groups.length === 0 ? (
             <Typography variant="body2" color="text.secondary" sx={{ px: 0.5 }}>
               {month ? `Không có khoản nào trong ${formatMonthVn(month)}.` : 'Chưa có khoản nào.'}
             </Typography>
           ) : (
-            <Stack spacing={1.5}>
-              {data.groups.map((group) => (
-                <Paper key={group.date} variant="outlined" sx={{ overflow: 'hidden' }}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ px: 2, py: 1.25, bgcolor: 'action.hover' }}
-                  >
-                    <Box>
-                      <Typography variant="subtitle2" component="span">
-                        {formatDateVn(group.date)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                        {weekdayVn(group.date)}
-                      </Typography>
-                    </Box>
-                    <MoneyText amount={group.total} suffix="₫" fontWeight={700} />
-                  </Stack>
-
-                  <Stack divider={<Divider />}>
-                    {group.entries.map((entry) => (
-                      <Stack
-                        key={entry.id}
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="flex-start"
-                        spacing={1.5}
-                        sx={{ px: 2, py: 1.25 }}
-                      >
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
-                            {entry.category}
-                          </Typography>
-                          {entry.note && (
-                            <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
-                              {entry.note}
-                            </Typography>
-                          )}
-                        </Box>
-                        <MoneyText amount={entry.amount} suffix="₫" fontWeight={600} />
-                      </Stack>
-                    ))}
-                  </Stack>
-                </Paper>
-              ))}
-            </Stack>
+            <DayFolderList groups={data.groups} />
           )}
 
           {/* ---------- Lịch sử thanh toán ---------- */}
