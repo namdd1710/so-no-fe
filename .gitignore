@@ -17,3 +17,6 @@ Thumbs.db
 npm-debug.log*
 .vercel
 coverage/
+
+# Spec / plan docs for agent workflows — keep local only
+docs/superpowers/
