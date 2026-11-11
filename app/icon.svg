@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sổ Nợ">
+  <rect width="64" height="64" rx="14" fill="#1565c0"/>
+  <path d="M30 23.5c-4.6-3.1-9.6-4.2-14-4.2v28.3c4.4 0 9.4 1.1 14 4.2z" fill="#fff"/>
+  <path d="M34 23.5c4.6-3.1 9.6-4.2 14-4.2v28.3c-4.4 0-9.4 1.1-14 4.2z" fill="#fff"/>
+  <g stroke="#1565c0" stroke-width="2.6" stroke-linecap="round">
+    <path d="M20 27.5h4.5M20 33h4.5M20 38.5h4.5"/>
+    <path d="M39.5 27.5H44M39.5 33H44M39.5 38.5H44"/>
+  </g>
+</svg>
