@@ -39,6 +39,8 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
   const paramsQs = new URLSearchParams();
   if (sp.month) paramsQs.set('month', sp.month);
   if (sp.page) paramsQs.set('page', sp.page);
+  // BE max; page has no pager — avoid silent truncation at default pageSize=10
+  paramsQs.set('pageSize', '50');
   // Omit status → BE defaults to all
   const qs = paramsQs.toString();
   const query = qs ? `?${qs}` : '';
