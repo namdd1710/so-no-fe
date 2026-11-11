@@ -17,11 +17,10 @@ import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
+import TablePagination from '@mui/material/TablePagination';
 import TextField from '@mui/material/TextField';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Link from 'next/link';
@@ -29,21 +28,60 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import DebtorDialog from './DebtorDialog';
+import DayFolderList from '@/components/ledger/DayFolderList';
 import EntryDialog from '@/components/ledger/EntryDialog';
 import MoneyText from '@/components/ledger/MoneyText';
 import SettleDialog from '@/components/ledger/SettleDialog';
 import { apiFetch } from '@/lib/client-api';
-import { formatDateVn, formatDateTimeVn, formatMonthVn, formatVnd, weekdayVn } from '@/lib/format';
+import { formatDateVn, formatDateTimeVn, formatMonthVn, formatVnd } from '@/lib/format';
 import type { EntryJson, LedgerResponse, SettlementJson } from '@/lib/types';
 
 type Props = { initial: LedgerResponse };
 
+type Status = 'unsettled' | 'settled' | 'all';
+
 type Snack = { open: boolean; message: string; severity: 'success' | 'error' | 'info' };
+
+type FilterState = {
+  status: Status;
+  month: string;
+  from: string;
+  to: string;
+  page: number;
+};
+
+function buildQuery(next: FilterState) {
+  const params = new URLSearchParams();
+  params.set('status', next.status);
+  params.set('page', String(next.page));
+  params.set('pageSize', '10');
+  if (next.from || next.to) {
+    if (next.from) params.set('from', next.from);
+    if (next.to) params.set('to', next.to);
+  } else if (next.month) {
+    params.set('month', next.month);
+  }
+  return `?${params.toString()}`;
+}
+
+function periodLabel(month: string, from: string, to: string) {
+  if (from || to) {
+    if (from && to) return `${formatDateVn(from)} → ${formatDateVn(to)}`;
+    if (from) return `từ ${formatDateVn(from)}`;
+    return `đến ${formatDateVn(to)}`;
+  }
+  if (month) return formatMonthVn(month);
+  return 'tất cả';
+}
 
 export default function DebtorDetailClient({ initial }: Props) {
   const router = useRouter();
   const [ledger, setLedger] = useState<LedgerResponse>(initial);
+  const [status, setStatus] = useState<Status>(initial.status ?? 'unsettled');
   const [month, setMonth] = useState(initial.month ?? '');
+  const [from, setFrom] = useState(initial.from ?? '');
+  const [to, setTo] = useState(initial.to ?? '');
+  const [page, setPage] = useState(initial.pagination?.page ?? 1);
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<Snack>({ open: false, message: '', severity: 'success' });
 
@@ -54,15 +92,15 @@ export default function DebtorDetailClient({ initial }: Props) {
   const [voidTarget, setVoidTarget] = useState<SettlementJson | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const { debtor, totals, watermark, groups, settlements, today } = ledger;
+  const { debtor, totals, watermark, groups, settlements, today, pagination } = ledger;
   const activeSettlements = settlements.filter((settlement) => settlement.status === 'active');
+  const pageSize = pagination?.pageSize ?? 10;
 
   const notify = (message: string, severity: Snack['severity'] = 'success') => setSnack({ open: true, message, severity });
 
-  async function load(nextMonth: string) {
+  async function load(next: FilterState) {
     setLoading(true);
-    const query = nextMonth ? `?month=${encodeURIComponent(nextMonth)}` : '';
-    const result = await apiFetch<LedgerResponse>(`/api/debtors/${debtor.id}${query}`);
+    const result = await apiFetch<LedgerResponse>(`/api/debtors/${debtor.id}${buildQuery(next)}`);
     setLoading(false);
 
     if (!result.ok || !result.data) {
@@ -70,12 +108,63 @@ export default function DebtorDetailClient({ initial }: Props) {
       notify(result.message ?? 'Không tải được sổ', 'error');
       return;
     }
+
     setLedger(result.data);
+    setStatus(result.data.status ?? next.status);
+    setMonth(result.data.month ?? '');
+    setFrom(result.data.from ?? '');
+    setTo(result.data.to ?? '');
+    setPage(result.data.pagination?.page ?? next.page);
+  }
+
+  function currentFilters(overrides: Partial<FilterState> = {}): FilterState {
+    return {
+      status,
+      month,
+      from,
+      to,
+      page,
+      ...overrides,
+    };
+  }
+
+  function changeStatus(next: Status | null) {
+    if (!next) return;
+    setStatus(next);
+    setPage(1);
+    void load(currentFilters({ status: next, page: 1 }));
   }
 
   function changeMonth(value: string) {
     setMonth(value);
-    void load(value);
+    setFrom('');
+    setTo('');
+    setPage(1);
+    void load(currentFilters({ month: value, from: '', to: '', page: 1 }));
+  }
+
+  function changeFrom(value: string) {
+    setFrom(value);
+    setMonth('');
+    setPage(1);
+    void load(currentFilters({ from: value, month: '', page: 1 }));
+  }
+
+  function changeTo(value: string) {
+    setTo(value);
+    setMonth('');
+    setPage(1);
+    void load(currentFilters({ to: value, month: '', page: 1 }));
+  }
+
+  function changePage(_event: unknown, nextZeroBased: number) {
+    const nextPage = nextZeroBased + 1;
+    setPage(nextPage);
+    void load(currentFilters({ page: nextPage }));
+  }
+
+  function reload() {
+    void load(currentFilters());
   }
 
   async function copyLink() {
@@ -97,7 +186,7 @@ export default function DebtorDetailClient({ initial }: Props) {
     });
     if (!result.ok) return notify(result.message ?? 'Không cập nhật được', 'error');
     notify(debtor.active ? 'Đã lưu trữ con nợ' : 'Đã bỏ lưu trữ');
-    void load(month);
+    reload();
   }
 
   async function confirmDelete() {
@@ -111,7 +200,7 @@ export default function DebtorDetailClient({ initial }: Props) {
     }
     setDeleteTarget(null);
     notify('Đã xoá khoản');
-    void load(month);
+    reload();
   }
 
   async function confirmVoid(reason: string) {
@@ -128,7 +217,7 @@ export default function DebtorDetailClient({ initial }: Props) {
     }
     setVoidTarget(null);
     notify('Đã huỷ lần chốt — tổng đã tính lại từ dữ liệu gốc');
-    void load(month);
+    reload();
   }
 
   function entryActions(entry: EntryJson) {
@@ -156,6 +245,21 @@ export default function DebtorDetailClient({ initial }: Props) {
       </Stack>
     );
   }
+
+  const emptyMessage = (() => {
+    const period = periodLabel(month, from, to);
+    if (status === 'unsettled') {
+      return period === 'tất cả'
+        ? 'Không có khoản chưa thanh toán.'
+        : `Không có khoản chưa thanh toán trong ${period}.`;
+    }
+    if (status === 'settled') {
+      return period === 'tất cả'
+        ? 'Không có khoản đã thanh toán.'
+        : `Không có khoản đã thanh toán trong ${period}.`;
+    }
+    return period === 'tất cả' ? 'Chưa có khoản nào. Bấm “Thêm khoản” để bắt đầu.' : `Không có khoản nào trong ${period}.`;
+  })();
 
   return (
     <>
@@ -251,106 +355,81 @@ export default function DebtorDetailClient({ initial }: Props) {
           </Alert>
         )}
 
-        {/* ---------- Lọc tháng ---------- */}
+        {/* ---------- Bộ lọc ---------- */}
         <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
-            <TextField
-              type="month"
+          <Stack spacing={2}>
+            <ToggleButtonGroup
+              exclusive
               size="small"
-              label="Lọc theo tháng"
-              value={month}
-              onChange={(event) => changeMonth(event.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-              sx={{ width: { xs: '100%', sm: 200 } }}
-            />
-            {month && (
-              <Button size="small" onClick={() => changeMonth('')}>
-                Xem tất cả
-              </Button>
-            )}
-            <Box sx={{ flexGrow: 1 }} />
-            <Stack direction="row" spacing={1} alignItems="center">
-              {loading && <CircularProgress size={16} />}
-              <Typography variant="body2" color="text.secondary">
-                Tổng phát sinh {month ? formatMonthVn(month) : 'tất cả'}:
-              </Typography>
-              <MoneyText amount={totals.monthTotal} suffix="₫" fontWeight={600} />
+              value={status}
+              onChange={(_event, next) => changeStatus(next)}
+              aria-label="Lọc trạng thái thanh toán"
+              sx={{ flexWrap: 'wrap' }}
+            >
+              <ToggleButton value="unsettled">Chưa thanh toán</ToggleButton>
+              <ToggleButton value="settled">Đã thanh toán</ToggleButton>
+              <ToggleButton value="all">Tất cả</ToggleButton>
+            </ToggleButtonGroup>
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+              <TextField
+                type="month"
+                size="small"
+                label="Lọc theo tháng"
+                value={month}
+                onChange={(event) => changeMonth(event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ width: { xs: '100%', sm: 200 } }}
+              />
+              <TextField
+                type="date"
+                size="small"
+                label="Từ ngày"
+                value={from}
+                onChange={(event) => changeFrom(event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ width: { xs: '100%', sm: 180 } }}
+              />
+              <TextField
+                type="date"
+                size="small"
+                label="Đến ngày"
+                value={to}
+                onChange={(event) => changeTo(event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ width: { xs: '100%', sm: 180 } }}
+              />
+              <Box sx={{ flexGrow: 1 }} />
+              <Stack direction="row" spacing={1} alignItems="center">
+                {loading && <CircularProgress size={16} />}
+                <Typography variant="body2" color="text.secondary">
+                  Tổng phát sinh {periodLabel(month, from, to)}:
+                </Typography>
+                <MoneyText amount={totals.monthTotal} suffix="₫" fontWeight={600} />
+              </Stack>
             </Stack>
           </Stack>
         </Paper>
 
-        {/* ---------- Danh sách khoản theo ngày ---------- */}
+        {/* ---------- Danh sách khoản theo ngày (folders) ---------- */}
         {groups.length === 0 ? (
-          <Alert severity="info">
-            {month ? `Không có khoản nào trong ${formatMonthVn(month)}.` : 'Chưa có khoản nào. Bấm “Thêm khoản” để bắt đầu.'}
-          </Alert>
+          <Alert severity="info">{emptyMessage}</Alert>
         ) : (
-          <Stack spacing={1.5}>
-            {groups.map((group) => (
-              <Paper key={group.date} variant="outlined" sx={{ overflow: 'hidden' }}>
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ px: 2, py: 1.25, bgcolor: 'action.hover' }}
-                >
-                  <Box>
-                    <Typography variant="subtitle2" component="span">
-                      {formatDateVn(group.date)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                      {weekdayVn(group.date)} · {group.count} khoản
-                    </Typography>
-                  </Box>
-                  <MoneyText amount={group.total} suffix="₫" fontWeight={700} />
-                </Stack>
-
-                {/* Desktop: bảng */}
-                <Table size="small" sx={{ display: { xs: 'none', sm: 'table' } }}>
-                  <TableBody>
-                    {group.entries.map((entry) => (
-                      <TableRow key={entry.id} hover>
-                        <TableCell sx={{ width: '32%', fontWeight: 500 }}>{entry.category}</TableCell>
-                        <TableCell sx={{ color: 'text.secondary', wordBreak: 'break-word' }}>{entry.note}</TableCell>
-                        <TableCell align="right" sx={{ width: 130 }}>
-                          <MoneyText amount={entry.amount} suffix="₫" />
-                        </TableCell>
-                        <TableCell align="right" sx={{ width: 96 }}>
-                          {entryActions(entry)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-
-                {/* Mobile: Stack (BRIEF §7) */}
-                <Stack divider={<Divider />} sx={{ display: { xs: 'flex', sm: 'none' } }}>
-                  {group.entries.map((entry) => (
-                    <Box key={entry.id} sx={{ px: 2, py: 1.25 }}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
-                            {entry.category}
-                          </Typography>
-                          {entry.note && (
-                            <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
-                              {entry.note}
-                            </Typography>
-                          )}
-                        </Box>
-                        <Box sx={{ textAlign: 'right' }}>
-                          <MoneyText amount={entry.amount} suffix="₫" fontWeight={600} display="block" />
-                        </Box>
-                      </Stack>
-                      <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>
-                        {entryActions(entry)}
-                      </Stack>
-                    </Box>
-                  ))}
-                </Stack>
-              </Paper>
-            ))}
-          </Stack>
+          <>
+            <DayFolderList groups={groups} renderActions={entryActions} />
+            <TablePagination
+              component="div"
+              count={pagination?.totalGroups ?? 0}
+              page={Math.max(0, (page ?? 1) - 1)}
+              onPageChange={changePage}
+              rowsPerPage={pageSize}
+              rowsPerPageOptions={[pageSize]}
+              labelRowsPerPage="Mỗi trang"
+              labelDisplayedRows={({ from: rowFrom, to: rowTo, count }) =>
+                `${rowFrom}–${rowTo} / ${count !== -1 ? count : `hơn ${rowTo}`} ngày`
+              }
+            />
+          </>
         )}
 
         {/* ---------- Lịch sử thanh toán ---------- */}
@@ -406,7 +485,7 @@ export default function DebtorDetailClient({ initial }: Props) {
         onClose={() => setEntryDialog({ open: false, entry: null })}
         onSaved={(message) => {
           notify(message);
-          void load(month);
+          reload();
         }}
       />
 
@@ -418,11 +497,11 @@ export default function DebtorDetailClient({ initial }: Props) {
         onClose={() => setSettleOpen(false)}
         onSettled={() => {
           notify('Đã chốt thanh toán');
-          void load(month);
+          reload();
         }}
         onRejected={(message) => {
           notify(message, 'error');
-          void load(month);
+          reload();
         }}
       />
 
@@ -432,7 +511,7 @@ export default function DebtorDetailClient({ initial }: Props) {
         onClose={() => setDebtorDialogOpen(false)}
         onSaved={(message) => {
           notify(message);
-          void load(month);
+          reload();
         }}
       />
 
