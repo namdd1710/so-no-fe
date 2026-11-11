@@ -8,6 +8,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import DayFolderList from '@/components/ledger/DayFolderList';
 import MoneyText from '@/components/ledger/MoneyText';
+import FakePayButton from '@/components/public/FakePayButton';
 import MonthFilter from '@/components/public/MonthFilter';
 import PaymentHistory from '@/components/public/PaymentHistory';
 import { fetchPublic } from '@/lib/api';
@@ -91,6 +92,11 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
                 )}
               </Stack>
             </Box>
+            {hasDebt && (
+              <Box sx={{ mt: 2 }}>
+                <FakePayButton />
+              </Box>
+            )}
           </Paper>
 
           {hasDebt === false && (
