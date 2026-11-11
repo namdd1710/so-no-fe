@@ -72,9 +72,24 @@ có nút đổi sáng/tối trên AppBar. `InitColorSchemeScript` đặt trong `
 
 ## 8. Deploy Vercel
 
-1. Tạo project từ repo này.
-2. Biến môi trường: `API_BASE_URL` = domain backend (`https://so-no-be.vercel.app`).
-3. Ở backend, đặt `APP_BASE_URL` và `ALLOWED_ORIGINS` = domain của FE.
+Repo đã có `vercel.json`: pin region **`sin1`** (gần Atlas Singapore) và framework Next.js.
+
+**Thứ tự deploy: BE trước, FE sau, rồi cập nhật lại BE.**
+
+1. Import repo → Vercel tự nhận Next.js, giữ Root Directory (`.`) và Build Command mặc định.
+2. Environment Variables (Production):
+   `API_BASE_URL=https://<be-domain>` — **không** có dấu `/` ở cuối, không phải `localhost`.
+3. Deploy, mở `https://<fe-domain>/admin/login`. Nếu trang báo "Không kết nối được máy chủ dữ liệu"
+   thì `API_BASE_URL` sai hoặc BE chưa deploy xong.
+4. Quay lại project BE: đặt `APP_BASE_URL` và `ALLOWED_ORIGINS` = domain FE → **Redeploy BE**.
+   Nếu bỏ bước này, mọi thao tác ghi (đăng nhập, thêm khoản…) sẽ trả `403 BAD_ORIGIN`.
+5. Vercel **Deployment Protection** phải tắt với Production, nếu không con nợ mở `/s/{code}` sẽ bị chặn.
+6. Đổi mật khẩu admin lần đầu bằng nút **Quên mật khẩu?** với `ADMIN_RECOVERY_KEY` đã đặt bên BE.
+
+**Dùng domain riêng (tuỳ chọn):** gắn domain cho FE rồi cập nhật `APP_BASE_URL` + `ALLOWED_ORIGINS` bên BE
+và `API_BASE_URL` bên FE theo domain mới, sau đó redeploy cả hai.
+
+Node: `engines.node >= 20` (Vercel chọn 22.x).
 
 ## 9. Cấu trúc
 
