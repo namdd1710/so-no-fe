@@ -15,6 +15,14 @@ npm run dev        # http://localhost:3000
 
 Cần chạy `so-no-be` trước (xem README của BE). Mở http://localhost:3000 → tự chuyển tới `/admin/login`.
 
+Muốn dev UI trỏ vào backend **đã deploy** thay vì BE local:
+
+```bash
+printf 'API_BASE_URL=https://so-no-be.vercel.app\n' > .env.local
+```
+
+Lúc đó mọi dữ liệu tạo từ máy bạn đi thẳng vào Atlas production — nhớ dọn sau khi thử.
+
 ## 2. Các trang
 
 | Route | Nội dung |
@@ -78,10 +86,12 @@ Repo đã có `vercel.json`: pin region **`sin1`** (gần Atlas Singapore) và f
 
 1. Import repo → Vercel tự nhận Next.js, giữ Root Directory (`.`) và Build Command mặc định.
 2. Environment Variables (Production):
-   `API_BASE_URL=https://<be-domain>` — **không** có dấu `/` ở cuối, không phải `localhost`.
+   `API_BASE_URL=https://so-no-be.vercel.app` — **không** có dấu `/` ở cuối, không phải `localhost`.
+   (Đổi domain BE thì sửa đúng biến này rồi redeploy FE.)
 3. Deploy, mở `https://<fe-domain>/admin/login`. Nếu trang báo "Không kết nối được máy chủ dữ liệu"
    thì `API_BASE_URL` sai hoặc BE chưa deploy xong.
-4. Quay lại project BE: đặt `APP_BASE_URL` và `ALLOWED_ORIGINS` = domain FE → **Redeploy BE**.
+4. Quay lại project BE: đặt `APP_BASE_URL` = domain FE, và `ALLOWED_ORIGINS` = domain FE
+   (hoặc `https://*.vercel.app` để mọi domain con của Vercel đều qua, kể cả preview) → **Redeploy BE**.
    Nếu bỏ bước này, mọi thao tác ghi (đăng nhập, thêm khoản…) sẽ trả `403 BAD_ORIGIN`.
 5. Vercel **Deployment Protection** phải tắt với Production, nếu không con nợ mở `/s/{code}` sẽ bị chặn.
 6. Đổi mật khẩu admin lần đầu bằng nút **Quên mật khẩu?** với `ADMIN_RECOVERY_KEY` đã đặt bên BE.
