@@ -11,6 +11,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import ResetPasswordDialog from './ResetPasswordDialog';
 import { apiFetch } from '@/lib/client-api';
 
 export default function LoginForm() {
@@ -18,10 +19,13 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+    setNotice(null);
     setLoading(true);
 
     const result = await apiFetch<{ ok: boolean }>('/api/auth/login', {
@@ -73,6 +77,12 @@ export default function LoginForm() {
               </Alert>
             )}
 
+            {notice && (
+              <Alert severity="success" sx={{ width: '100%' }}>
+                {notice}
+              </Alert>
+            )}
+
             <TextField
               type="password"
               label="Mật khẩu"
@@ -88,12 +98,26 @@ export default function LoginForm() {
               {loading ? 'Đang kiểm tra…' : 'Đăng nhập'}
             </Button>
 
+            <Button variant="text" size="small" onClick={() => setResetOpen(true)}>
+              Quên mật khẩu?
+            </Button>
+
             <Typography variant="caption" color="text.secondary" textAlign="center">
               Chỉ dành cho quản trị viên. Không có chức năng đăng ký.
             </Typography>
           </Stack>
         </form>
       </Paper>
+
+      <ResetPasswordDialog
+        open={resetOpen}
+        onClose={() => setResetOpen(false)}
+        onChanged={(message) => {
+          setError(null);
+          setNotice(message);
+          setPassword('');
+        }}
+      />
     </Box>
   );
 }
