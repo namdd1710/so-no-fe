@@ -1,0 +1,104 @@
+/** Kiểu dữ liệu dùng chung, phản chiếu hình dạng API của so-no-be. */
+
+export type DebtorSummary = {
+  id: string;
+  name: string;
+  phone: string | null;
+  note: string | null;
+  accessCode: string;
+  active: boolean;
+  createdAt: string;
+  archivedAt: string | null;
+  shareUrl: string;
+  unsettled: number;
+  settled: number;
+  lastSettledAt: string | null;
+  entryCount: number;
+};
+
+export type EntryJson = {
+  id: string;
+  date: string;
+  category: string;
+  amount: number;
+  note: string;
+  editable: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SettlementJson = {
+  id: string;
+  periodStart: string | null;
+  periodEnd: string;
+  amount: number;
+  entryCount: number;
+  status: 'active' | 'void';
+  voidReason: string | null;
+  createdAt: string;
+  voidedAt: string | null;
+};
+
+export type LedgerTotals = {
+  unsettled: number;
+  settled: number;
+  monthTotal: number;
+  unsettledCount: number;
+  settlePreview: number;
+  settlePreviewCount: number;
+};
+
+export type DayGroup = {
+  date: string;
+  total: number;
+  count: number;
+  entries: EntryJson[];
+};
+
+export type LedgerResponse = {
+  debtor: DebtorSummary;
+  today: string;
+  watermark: string | null;
+  latestSettlement: SettlementJson | null;
+  totals: LedgerTotals;
+  entries: EntryJson[];
+  groups: DayGroup[];
+  settlements: SettlementJson[];
+  month: string | null;
+  categories: string[];
+};
+
+export type PublicEntry = {
+  id: string;
+  date: string;
+  category: string;
+  amount: number;
+  note: string;
+};
+
+export type PublicLedgerResponse = {
+  name: string;
+  today: string;
+  watermark: string | null;
+  latestSettlement: { periodEnd: string; amount: number } | null;
+  totals: { unsettled: number; unsettledCount: number; settled: number; monthTotal: number };
+  entries: PublicEntry[];
+  groups: { date: string; total: number; count: number; entries: PublicEntry[] }[];
+  settlements: { id: string; periodStart: string | null; periodEnd: string; amount: number; entryCount: number; createdAt: string }[];
+  month: string | null;
+};
+
+export type SettlePreview = {
+  ok: boolean;
+  periodStart: string | null;
+  periodEnd: string;
+  amount: number;
+  entryCount: number;
+  dayCount: number;
+  code?: string;
+  message?: string;
+};
+
+export type ApiErrorShape = {
+  error?: { code?: string; message?: string; [key: string]: unknown };
+};
