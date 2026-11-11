@@ -69,7 +69,8 @@ export default function DebtorsClient({ initial }: Props) {
   }, [includeArchived]);
 
   async function copyLink(debtor: DebtorSummary) {
-    const shareUrl = debtor.shareUrl || `${window.location.origin}/s/${debtor.accessCode}`;
+    // Dựng link từ origin đang mở thay vì shareUrl của BE (BE dùng APP_BASE_URL, dễ còn localhost).
+    const shareUrl = `${window.location.origin}/s/${debtor.accessCode}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       notify('Đã copy link của ' + debtor.name);
