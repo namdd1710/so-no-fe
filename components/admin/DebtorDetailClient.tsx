@@ -32,6 +32,12 @@ import DayFolderList from '@/components/ledger/DayFolderList';
 import EntryDialog from '@/components/ledger/EntryDialog';
 import MoneyText from '@/components/ledger/MoneyText';
 import SettleDialog from '@/components/ledger/SettleDialog';
+import {
+  filledFilterFieldSx,
+  softIconButtonSx,
+  softPaperSx,
+  statusToggleGroupSx,
+} from '@/components/ui/softBlock';
 import { apiFetch } from '@/lib/client-api';
 import { formatDateVn, formatDateTimeVn, formatMonthVn, formatVnd } from '@/lib/format';
 import type { EntryJson, LedgerResponse, SettlementJson } from '@/lib/types';
@@ -264,13 +270,15 @@ export default function DebtorDetailClient({ initial }: Props) {
   return (
     <>
       <Stack spacing={2.5}>
-        <Link href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'inherit' }}>
-          <ArrowBackIcon fontSize="small" />
-          <Typography variant="body2">Danh sách con nợ</Typography>
+        <Link href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <ArrowBackIcon fontSize="small" color="primary" />
+          <Typography variant="body2" color="primary">
+            Danh sách con nợ
+          </Typography>
         </Link>
 
         {/* ---------- Header ---------- */}
-        <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 } }}>
+        <Paper elevation={0} sx={{ ...softPaperSx, p: { xs: 2, sm: 2.5 } }}>
           <Stack spacing={2}>
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
               <Box sx={{ minWidth: 0 }}>
@@ -293,17 +301,17 @@ export default function DebtorDetailClient({ initial }: Props) {
               </Box>
               <Stack direction="row" spacing={0.25}>
                 <Tooltip title="Copy link gửi con nợ">
-                  <IconButton onClick={copyLink} aria-label="Copy link">
+                  <IconButton onClick={copyLink} aria-label="Copy link" sx={softIconButtonSx}>
                     <ContentCopyIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Sửa thông tin">
-                  <IconButton onClick={() => setDebtorDialogOpen(true)} aria-label="Sửa con nợ">
+                  <IconButton onClick={() => setDebtorDialogOpen(true)} aria-label="Sửa con nợ" sx={softIconButtonSx}>
                     <EditOutlinedIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title={debtor.active ? 'Lưu trữ con nợ' : 'Bỏ lưu trữ'}>
-                  <IconButton onClick={toggleArchive} aria-label="Lưu trữ con nợ">
+                  <IconButton onClick={toggleArchive} aria-label="Lưu trữ con nợ" sx={softIconButtonSx}>
                     {debtor.active ? <ArchiveOutlinedIcon fontSize="small" /> : <UnarchiveOutlinedIcon fontSize="small" />}
                   </IconButton>
                 </Tooltip>
@@ -314,7 +322,7 @@ export default function DebtorDetailClient({ initial }: Props) {
               <Typography variant="overline" color="text.secondary">
                 Chưa thanh toán
               </Typography>
-              <MoneyText variant="h4" component="p" amount={totals.unsettled} suffix="₫" />
+              <MoneyText variant="h4" component="p" amount={totals.unsettled} suffix="₫" color="primary" />
               <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1 }}>
                 <Chip size="small" label={`${totals.unsettledCount} khoản`} />
                 {watermark ? (
@@ -356,7 +364,7 @@ export default function DebtorDetailClient({ initial }: Props) {
         )}
 
         {/* ---------- Bộ lọc ---------- */}
-        <Paper variant="outlined" sx={{ p: 2 }}>
+        <Paper elevation={0} sx={{ ...softPaperSx, p: 2 }}>
           <Stack spacing={2}>
             <ToggleButtonGroup
               exclusive
@@ -364,7 +372,7 @@ export default function DebtorDetailClient({ initial }: Props) {
               value={status}
               onChange={(_event, next) => changeStatus(next)}
               aria-label="Lọc trạng thái thanh toán"
-              sx={{ flexWrap: 'wrap' }}
+              sx={statusToggleGroupSx}
             >
               <ToggleButton value="unsettled">Chưa thanh toán</ToggleButton>
               <ToggleButton value="settled">Đã thanh toán</ToggleButton>
@@ -379,7 +387,7 @@ export default function DebtorDetailClient({ initial }: Props) {
                 value={month}
                 onChange={(event) => changeMonth(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: { xs: '100%', sm: 200 } }}
+                sx={{ width: { xs: '100%', sm: 200 }, ...filledFilterFieldSx }}
               />
               <TextField
                 type="date"
@@ -388,7 +396,7 @@ export default function DebtorDetailClient({ initial }: Props) {
                 value={from}
                 onChange={(event) => changeFrom(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: { xs: '100%', sm: 180 } }}
+                sx={{ width: { xs: '100%', sm: 180 }, ...filledFilterFieldSx }}
               />
               <TextField
                 type="date"
@@ -397,15 +405,22 @@ export default function DebtorDetailClient({ initial }: Props) {
                 value={to}
                 onChange={(event) => changeTo(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: { xs: '100%', sm: 180 } }}
+                sx={{ width: { xs: '100%', sm: 180 }, ...filledFilterFieldSx }}
               />
-              <Box sx={{ flexGrow: 1 }} />
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                flexWrap="wrap"
+                useFlexGap
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
                 {loading && <CircularProgress size={16} />}
                 <Typography variant="body2" color="text.secondary">
                   Tổng phát sinh {periodLabel(month, from, to)}:
                 </Typography>
-                <MoneyText amount={totals.monthTotal} suffix="₫" fontWeight={600} />
+                <MoneyText amount={totals.monthTotal} suffix="₫" fontWeight={700} color="primary" />
               </Stack>
             </Stack>
           </Stack>
@@ -428,12 +443,17 @@ export default function DebtorDetailClient({ initial }: Props) {
               labelDisplayedRows={({ from: rowFrom, to: rowTo, count }) =>
                 `${rowFrom}–${rowTo} / ${count !== -1 ? count : `hơn ${rowTo}`} ngày`
               }
+              sx={{
+                width: '100%',
+                overflow: 'auto',
+                '.MuiTablePagination-toolbar': { flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.5 },
+              }}
             />
           </>
         )}
 
         {/* ---------- Lịch sử thanh toán ---------- */}
-        <Paper variant="outlined" sx={{ p: 2 }}>
+        <Paper elevation={0} sx={{ ...softPaperSx, p: 2 }}>
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
             Lịch sử thanh toán
           </Typography>

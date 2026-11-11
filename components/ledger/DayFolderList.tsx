@@ -63,10 +63,10 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
-        <Button size="small" variant="text" onClick={expandAll}>
+        <Button size="small" variant="text" color="primary" onClick={expandAll}>
           Mở tất cả
         </Button>
-        <Button size="small" variant="text" onClick={collapseAll}>
+        <Button size="small" variant="text" color="primary" onClick={collapseAll}>
           Đóng tất cả
         </Button>
       </Stack>
@@ -76,8 +76,8 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
         return (
           <Accordion
             key={group.date}
-            variant="outlined"
             disableGutters
+            elevation={0}
             expanded={isExpanded}
             onChange={(_event, next) => {
               setExpanded((prev) => ({ ...prev, [group.date]: next }));
@@ -85,16 +85,21 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
             sx={{
               borderRadius: 2,
               overflow: 'hidden',
+              bgcolor: 'background.paper',
+              boxShadow: '0 1px 3px rgba(21, 101, 192, 0.08)',
               '&:before': { display: 'none' },
+              '&.Mui-expanded': { margin: 0 },
             }}
           >
             <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
+              expandIcon={<ExpandMoreIcon color="primary" />}
               aria-controls={`day-${group.date}-content`}
               id={`day-${group.date}-header`}
               sx={{
                 px: 2,
-                bgcolor: 'action.hover',
+                minHeight: 56,
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'light' ? 'rgba(21, 101, 192, 0.06)' : 'action.hover',
                 '& .MuiAccordionSummary-content': {
                   my: 1.25,
                   alignItems: 'center',
@@ -112,7 +117,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                   {weekdayVn(group.date)} · {group.count} khoản
                 </Typography>
               </Box>
-              <MoneyText amount={group.total} suffix="₫" fontWeight={700} />
+              <MoneyText amount={group.total} suffix="₫" fontWeight={700} color="primary" />
             </AccordionSummary>
 
             <AccordionDetails sx={{ p: 0 }}>

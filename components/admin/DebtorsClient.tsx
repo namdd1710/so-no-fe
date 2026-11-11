@@ -5,6 +5,7 @@ import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import UnarchiveOutlinedIcon from '@mui/icons-material/UnarchiveOutlined';
 import Alert from '@mui/material/Alert';
+import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -16,12 +17,6 @@ import Paper from '@mui/material/Paper';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Link from 'next/link';
@@ -29,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import DebtorDialog from './DebtorDialog';
 import MoneyText from '@/components/ledger/MoneyText';
+import { softIconButtonSx, softPaperSx } from '@/components/ui/softBlock';
 import { apiFetch } from '@/lib/client-api';
 import { formatDateVn } from '@/lib/format';
 import type { DebtorSummary } from '@/lib/types';
@@ -36,6 +32,13 @@ import type { DebtorSummary } from '@/lib/types';
 type Props = { initial: DebtorSummary[] };
 
 type Snack = { open: boolean; message: string; severity: 'success' | 'error' | 'info' };
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 export default function DebtorsClient({ initial }: Props) {
   const router = useRouter();
@@ -94,7 +97,7 @@ export default function DebtorsClient({ initial }: Props) {
 
   return (
     <>
-      <Stack spacing={2.5}>
+      <Stack spacing={2.5} sx={{ pb: { xs: 10, sm: 0 } }}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={2}
@@ -104,14 +107,15 @@ export default function DebtorsClient({ initial }: Props) {
           <Box>
             <Typography variant="h5">Con nợ</Typography>
             <Typography variant="body2" color="text.secondary">
-              {activeDebtors.length} người đang theo dõi · tổng chưa thu <MoneyText amount={totalUnsettled} suffix="₫" fontWeight={600} />
+              {activeDebtors.length} người đang theo dõi · tổng chưa thu{' '}
+              <MoneyText amount={totalUnsettled} suffix="₫" fontWeight={600} color="primary" />
             </Typography>
           </Box>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setDialog({ open: true, debtor: null })}
-            sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}
+            sx={{ alignSelf: { xs: 'stretch', sm: 'center' }, display: { xs: 'none', sm: 'inline-flex' } }}
           >
             Thêm con nợ
           </Button>
@@ -137,49 +141,48 @@ export default function DebtorsClient({ initial }: Props) {
           </Alert>
         )}
 
-        {/* Desktop: bảng */}
         {debtors.length > 0 && (
-          <TableContainer component={Paper} variant="outlined" sx={{ display: { xs: 'none', sm: 'block' } }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Tên</TableCell>
-                  <TableCell align="right">Chưa thanh toán</TableCell>
-                  <TableCell>Chốt gần nhất</TableCell>
-                  <TableCell align="right">Link</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {debtors.map((debtor) => (
-                  <TableRow key={debtor.id} hover>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                        <Link href={`/admin/debtors/${debtor.id}`} style={{ color: 'inherit', fontWeight: 600 }}>
-                          {debtor.name}
-                        </Link>
-                        {!debtor.active && <Chip size="small" label="Đã lưu trữ" />}
-                      </Stack>
-                      {debtor.phone && (
-                        <Typography variant="caption" color="text.secondary">
-                          {debtor.phone}
+          <Stack spacing={1.5}>
+            {debtors.map((debtor) => (
+              <Paper key={debtor.id} elevation={0} sx={{ ...softPaperSx, p: 2 }}>
+                <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                  <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40, fontSize: 16 }}>
+                    {initials(debtor.name)}
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                          <Link href={`/admin/debtors/${debtor.id}`} style={{ color: 'inherit', fontWeight: 600 }}>
+                            {debtor.name}
+                          </Link>
+                          {!debtor.active && <Chip size="small" label="Đã lưu trữ" />}
+                        </Stack>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {debtor.phone || 'Không có SĐT'}
                         </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <MoneyText amount={debtor.unsettled} suffix="₫" fontWeight={600} />
-                    </TableCell>
-                    <TableCell>
-                      {debtor.lastSettledAt ? (
-                        <Chip size="small" variant="outlined" label={formatDateVn(debtor.lastSettledAt)} />
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">
-                          Chưa chốt
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {debtor.lastSettledAt
+                            ? `Đã chốt đến ${formatDateVn(debtor.lastSettledAt)}`
+                            : 'Chưa chốt lần nào'}
                         </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
+                      </Box>
+                      <MoneyText
+                        amount={debtor.unsettled}
+                        suffix="₫"
+                        fontWeight={700}
+                        color="primary"
+                        sx={{ fontSize: { xs: '1.05rem', sm: '1.15rem' } }}
+                      />
+                    </Stack>
+                    <Stack direction="row" justifyContent="flex-end" spacing={0.5} sx={{ mt: 1 }}>
                       <Tooltip title="Copy link gửi con nợ">
-                        <IconButton size="small" onClick={() => copyLink(debtor)} aria-label={`Copy link của ${debtor.name}`}>
+                        <IconButton
+                          size="small"
+                          onClick={() => copyLink(debtor)}
+                          aria-label={`Copy link của ${debtor.name}`}
+                          sx={softIconButtonSx}
+                        >
                           <ContentCopyIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -188,49 +191,17 @@ export default function DebtorsClient({ initial }: Props) {
                           size="small"
                           onClick={() => toggleArchive(debtor)}
                           aria-label={debtor.active ? 'Lưu trữ' : 'Bỏ lưu trữ'}
+                          sx={softIconButtonSx}
                         >
-                          {debtor.active ? <ArchiveOutlinedIcon fontSize="small" /> : <UnarchiveOutlinedIcon fontSize="small" />}
+                          {debtor.active ? (
+                            <ArchiveOutlinedIcon fontSize="small" />
+                          ) : (
+                            <UnarchiveOutlinedIcon fontSize="small" />
+                          )}
                         </IconButton>
                       </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {/* Mobile: danh sách card */}
-        {debtors.length > 0 && (
-          <Stack spacing={1.5} sx={{ display: { xs: 'flex', sm: 'none' } }}>
-            {debtors.map((debtor) => (
-              <Paper key={debtor.id} variant="outlined" sx={{ p: 2 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                      <Link href={`/admin/debtors/${debtor.id}`} style={{ color: 'inherit', fontWeight: 600 }}>
-                        {debtor.name}
-                      </Link>
-                      {!debtor.active && <Chip size="small" label="Lưu trữ" />}
                     </Stack>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {debtor.phone || 'Không có SĐT'}
-                    </Typography>
                   </Box>
-                  <MoneyText amount={debtor.unsettled} suffix="₫" fontWeight={700} />
-                </Stack>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.5 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    {debtor.lastSettledAt ? `Đã chốt đến ${formatDateVn(debtor.lastSettledAt)}` : 'Chưa chốt lần nào'}
-                  </Typography>
-                  <Stack direction="row" spacing={0.5}>
-                    <IconButton size="small" onClick={() => copyLink(debtor)} aria-label="Copy link">
-                      <ContentCopyIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => toggleArchive(debtor)} aria-label="Lưu trữ">
-                      {debtor.active ? <ArchiveOutlinedIcon fontSize="small" /> : <UnarchiveOutlinedIcon fontSize="small" />}
-                    </IconButton>
-                  </Stack>
                 </Stack>
               </Paper>
             ))}

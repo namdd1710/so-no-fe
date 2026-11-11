@@ -71,6 +71,15 @@ export default function AdminShell({ children }: { children: ReactNode }) {
             component={Link}
             href={item.href}
             selected={pathname === item.href || pathname.startsWith(`${item.href}/`)}
+            sx={{
+              borderRadius: 2,
+              mx: 1,
+              '&.Mui-selected': {
+                bgcolor: 'action.selected',
+                color: 'primary.main',
+                '& .MuiListItemIcon-root': { color: 'primary.main' },
+              },
+            }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.label} />
@@ -125,8 +134,8 @@ export default function AdminShell({ children }: { children: ReactNode }) {
             '& .MuiDrawer-paper': {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
-              borderRight: '1px solid',
-              borderColor: 'divider',
+              borderRight: 'none',
+              boxShadow: '1px 0 0 rgba(21, 101, 192, 0.06)',
               bgcolor: 'background.paper',
             },
           }}
