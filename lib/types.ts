@@ -54,6 +54,13 @@ export type DayGroup = {
   entries: EntryJson[];
 };
 
+export type PaginationMeta = {
+  page: number;
+  pageSize: number;
+  totalGroups: number;
+  totalPages: number;
+};
+
 export type LedgerResponse = {
   debtor: DebtorSummary;
   today: string;
@@ -64,6 +71,10 @@ export type LedgerResponse = {
   groups: DayGroup[];
   settlements: SettlementJson[];
   month: string | null;
+  status: 'unsettled' | 'settled' | 'all';
+  from: string | null;
+  to: string | null;
+  pagination: PaginationMeta;
   categories: string[];
 };
 
@@ -85,6 +96,10 @@ export type PublicLedgerResponse = {
   groups: { date: string; total: number; count: number; entries: PublicEntry[] }[];
   settlements: { id: string; periodStart: string | null; periodEnd: string; amount: number; entryCount: number; createdAt: string }[];
   month: string | null;
+  status: 'unsettled' | 'settled' | 'all';
+  from: string | null;
+  to: string | null;
+  pagination: PaginationMeta;
 };
 
 export type SettlePreview = {
