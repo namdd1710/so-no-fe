@@ -83,11 +83,22 @@ export default function FakePayButton() {
   return (
     <>
       {/* Nhãn cố định “Đã thanh toán”; style giữ như nút Thanh toán cũ (contained). */}
-      <Tooltip title="Click để xác nhận đã thanh toán" arrow placement="top">
-        <Button variant="contained" color="primary" fullWidth onClick={handleOpen}>
-          Đã thanh toán
-        </Button>
-      </Tooltip>
+      <Stack spacing={0.5}>
+        <Tooltip title="Click để xác nhận đã thanh toán" arrow placement="top">
+          <Button variant="contained" color="primary" fullWidth onClick={handleOpen}>
+            Đã thanh toán
+          </Button>
+        </Tooltip>
+        {/* Tooltip chỉ hiện khi hover, tức là không tồn tại trên cảm ứng — mobile lấy dòng chữ này thay thế. */}
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          align="center"
+          sx={{ display: { xs: 'block', sm: 'none' } }}
+        >
+          Chạm để xác nhận đã thanh toán
+        </Typography>
+      </Stack>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs">
         <DialogTitle>{loading ? 'Đang thanh toán…' : 'Thanh toán'}</DialogTitle>
         <DialogContent>
