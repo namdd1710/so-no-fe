@@ -118,7 +118,7 @@ export default function SettleDialog({ open, onClose, debtorId, today, watermark
             sx={{
               border: '1px solid',
               borderColor: 'divider',
-              borderRadius: 2,
+              borderRadius: 1,
               p: 2,
               bgcolor: 'action.hover',
             }}

@@ -77,7 +77,7 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
               {data.name}
             </Typography>
 
-            <Box sx={{ mt: 2, bgcolor: 'action.hover', borderRadius: 2, px: 2, py: 1.75 }}>
+            <Box sx={{ mt: 2, bgcolor: 'action.hover', borderRadius: 1, px: 2, py: 1.75 }}>
               <Typography variant="overline" color="text.secondary">
                 {hasDebt ? 'Còn nợ' : 'Đã thanh toán đủ'}
               </Typography>

@@ -83,7 +83,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
               setExpanded((prev) => ({ ...prev, [group.date]: next }));
             }}
             sx={{
-              borderRadius: 2,
+              borderRadius: 1,
               overflow: 'hidden',
               bgcolor: 'background.paper',
               boxShadow: '0 1px 3px rgba(21, 101, 192, 0.08)',

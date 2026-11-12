@@ -72,7 +72,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
             href={item.href}
             selected={pathname === item.href || pathname.startsWith(`${item.href}/`)}
             sx={{
-              borderRadius: 2,
+              borderRadius: 1,
               mx: 1,
               '&.Mui-selected': {
                 bgcolor: 'action.selected',

@@ -318,7 +318,7 @@ export default function DebtorDetailClient({ initial }: Props) {
               </Stack>
             </Stack>
 
-            <Box sx={{ bgcolor: 'action.hover', borderRadius: 2, px: 2, py: 1.75 }}>
+            <Box sx={{ bgcolor: 'action.hover', borderRadius: 1, px: 2, py: 1.75 }}>
               <Typography variant="overline" color="text.secondary">
                 Chưa thanh toán
               </Typography>
