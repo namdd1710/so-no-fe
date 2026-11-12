@@ -10,6 +10,7 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import MoneyText from '@/components/ledger/MoneyText';
+import { dayRowSx } from '@/components/ui/softBlock';
 import { formatDateVn, weekdayVn } from '@/lib/format';
 
 export type DayFolderEntry = {
@@ -30,14 +31,21 @@ type Props<T extends DayFolderEntry = DayFolderEntry> = {
   groups: DayFolderGroup<T>[];
   /** Admin: sửa/xoá. Public omits. */
   renderActions?: (entry: T) => ReactNode;
+  /**
+   * `embedded` — hàng tint nằm trong 1 khối Paper lớn (giống mockup).
+   * `card` — mỗi ngày một soft card riêng (trang public).
+   */
+  variant?: 'embedded' | 'card';
 };
 
 /** Accordion danh sách khoản theo ngày — mặc định thu gọn hết. */
 export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>({
   groups,
   renderActions,
+  variant = 'card',
 }: Props<T>) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const embedded = variant === 'embedded';
 
   const groupsSignature = useMemo(() => groups.map((group) => group.date).join('|'), [groups]);
 
@@ -61,7 +69,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
     : 'minmax(0, 1.2fr) minmax(0, 1.5fr) auto';
 
   return (
-    <Stack spacing={1.5}>
+    <Stack spacing={embedded ? 1 : 1.5}>
       <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
         <Button size="small" variant="text" color="primary" onClick={expandAll}>
           Mở tất cả
@@ -82,14 +90,18 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
             onChange={(_event, next) => {
               setExpanded((prev) => ({ ...prev, [group.date]: next }));
             }}
-            sx={{
-              borderRadius: 1,
-              overflow: 'hidden',
-              bgcolor: 'background.paper',
-              boxShadow: '0 1px 3px rgba(21, 101, 192, 0.08)',
-              '&:before': { display: 'none' },
-              '&.Mui-expanded': { margin: 0 },
-            }}
+            sx={
+              embedded
+                ? dayRowSx
+                : {
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                    bgcolor: 'background.paper',
+                    boxShadow: '0 4px 24px rgba(21, 101, 192, 0.10)',
+                    '&:before': { display: 'none' },
+                    '&.Mui-expanded': { margin: 0 },
+                  }
+            }
           >
             <AccordionSummary
               expandIcon={<ExpandMoreIcon color="primary" />}
@@ -97,11 +109,16 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
               id={`day-${group.date}-header`}
               sx={{
                 px: 2,
-                minHeight: 56,
+                minHeight: 52,
+                borderRadius: 1,
                 bgcolor: (theme) =>
-                  theme.palette.mode === 'light' ? 'rgba(21, 101, 192, 0.06)' : 'action.hover',
+                  theme.palette.mode === 'light' ? 'rgba(21, 101, 192, 0.08)' : 'action.hover',
+                '&:hover': {
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'light' ? 'rgba(21, 101, 192, 0.12)' : 'action.selected',
+                },
                 '& .MuiAccordionSummary-content': {
-                  my: 1.25,
+                  my: 1.1,
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: 1.5,
@@ -110,7 +127,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
               }}
             >
               <Box sx={{ minWidth: 0 }}>
-                <Typography variant="subtitle2" component="span">
+                <Typography variant="subtitle2" component="span" fontWeight={600}>
                   {formatDateVn(group.date)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
@@ -120,8 +137,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
               <MoneyText amount={group.total} suffix="₫" fontWeight={700} color="primary" />
             </AccordionSummary>
 
-            <AccordionDetails sx={{ p: 0 }}>
-              {/* Desktop rows */}
+            <AccordionDetails sx={{ p: 0, bgcolor: 'background.paper' }}>
               <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                 {group.entries.map((entry, index) => (
                   <Box
@@ -133,8 +149,9 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                       alignItems: 'center',
                       px: 2,
                       py: 1.25,
-                      borderTop: index === 0 ? 0 : 1,
+                      borderTop: 1,
                       borderColor: 'divider',
+                      ...(index === 0 ? { borderTopColor: 'transparent' } : null),
                     }}
                   >
                     <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
@@ -153,7 +170,6 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                 ))}
               </Box>
 
-              {/* Mobile stack */}
               <Stack sx={{ display: { xs: 'flex', sm: 'none' } }}>
                 {group.entries.map((entry, index) => (
                   <Box

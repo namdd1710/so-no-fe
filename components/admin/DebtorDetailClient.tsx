@@ -269,17 +269,17 @@ export default function DebtorDetailClient({ initial }: Props) {
 
   return (
     <>
-      <Stack spacing={2.5}>
+      <Stack spacing={2}>
         <Link href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <ArrowBackIcon fontSize="small" color="primary" />
-          <Typography variant="body2" color="primary">
+          <Typography variant="body2" color="primary" fontWeight={600}>
             Danh sách con nợ
           </Typography>
         </Link>
 
-        {/* ---------- Header ---------- */}
+        {/* Một khối trắng như mockup: tên → tổng/CTA → lọc → ngày */}
         <Paper elevation={0} sx={{ ...softPaperSx, p: { xs: 2, sm: 2.5 } }}>
-          <Stack spacing={2}>
+          <Stack spacing={2.25}>
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
               <Box sx={{ minWidth: 0 }}>
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
@@ -299,7 +299,7 @@ export default function DebtorDetailClient({ initial }: Props) {
                   </Typography>
                 )}
               </Box>
-              <Stack direction="row" spacing={0.25}>
+              <Stack direction="row" spacing={0.75}>
                 <Tooltip title="Copy link gửi con nợ">
                   <IconButton onClick={copyLink} aria-label="Copy link" sx={softIconButtonSx}>
                     <ContentCopyIcon fontSize="small" />
@@ -318,141 +318,148 @@ export default function DebtorDetailClient({ initial }: Props) {
               </Stack>
             </Stack>
 
-            <Box sx={{ bgcolor: 'action.hover', borderRadius: 1, px: 2, py: 1.75 }}>
-              <Typography variant="overline" color="text.secondary">
-                Chưa thanh toán
-              </Typography>
-              <MoneyText variant="h4" component="p" amount={totals.unsettled} suffix="₫" color="primary" />
-              <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1 }}>
-                <Chip size="small" label={`${totals.unsettledCount} khoản`} />
-                {watermark ? (
-                  <Chip size="small" color="success" variant="outlined" label={`Đã chốt đến ${formatDateVn(watermark)}`} />
-                ) : (
-                  <Chip size="small" variant="outlined" label="Chưa chốt lần nào" />
-                )}
-                <Chip size="small" variant="outlined" label={`Đã trả ${formatVnd(totals.settled)}₫`} />
-              </Stack>
-            </Box>
-
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setEntryDialog({ open: true, entry: null })}
-                fullWidth
-              >
-                Thêm khoản
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => setSettleOpen(true)}
-                disabled={totals.settlePreviewCount === 0}
-                fullWidth
-                sx={{ whiteSpace: 'nowrap' }}
-              >
-                Chốt đã thanh toán · {formatVnd(totals.settlePreview)}₫
-              </Button>
-            </Stack>
-          </Stack>
-        </Paper>
-
-        {watermark && (
-          <Alert severity="info">
-            Sổ đã chốt đến <strong>{formatDateVn(watermark)}</strong>. Các khoản trong kỳ đã chốt bị khoá sửa/xoá — huỷ lần
-            chốt đó ở mục <em>Lịch sử thanh toán</em> nếu cần chỉnh.
-          </Alert>
-        )}
-
-        {/* ---------- Bộ lọc ---------- */}
-        <Paper elevation={0} sx={{ ...softPaperSx, p: 2 }}>
-          <Stack spacing={2}>
-            <ToggleButtonGroup
-              exclusive
-              size="small"
-              value={status}
-              onChange={(_event, next) => changeStatus(next)}
-              aria-label="Lọc trạng thái thanh toán"
-              sx={statusToggleGroupSx}
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1.5}
+              alignItems={{ sm: 'center' }}
+              justifyContent="space-between"
+              sx={{ bgcolor: 'rgba(21, 101, 192, 0.06)', borderRadius: 1, px: 2, py: 1.5 }}
             >
-              <ToggleButton value="unsettled">Chưa thanh toán</ToggleButton>
-              <ToggleButton value="settled">Đã thanh toán</ToggleButton>
-              <ToggleButton value="all">Tất cả</ToggleButton>
-            </ToggleButtonGroup>
-
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
-              <TextField
-                type="month"
-                size="small"
-                label="Lọc theo tháng"
-                value={month}
-                onChange={(event) => changeMonth(event.target.value)}
-                slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: { xs: '100%', sm: 200 }, ...filledFilterFieldSx }}
-              />
-              <TextField
-                type="date"
-                size="small"
-                label="Từ ngày"
-                value={from}
-                onChange={(event) => changeFrom(event.target.value)}
-                slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: { xs: '100%', sm: 180 }, ...filledFilterFieldSx }}
-              />
-              <TextField
-                type="date"
-                size="small"
-                label="Đến ngày"
-                value={to}
-                onChange={(event) => changeTo(event.target.value)}
-                slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: { xs: '100%', sm: 180 }, ...filledFilterFieldSx }}
-              />
-              <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                flexWrap="wrap"
-                useFlexGap
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
-              >
-                {loading && <CircularProgress size={16} />}
-                <Typography variant="body2" color="text.secondary">
-                  Tổng phát sinh {periodLabel(month, from, to)}:
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Chưa thanh toán
                 </Typography>
-                <MoneyText amount={totals.monthTotal} suffix="₫" fontWeight={700} color="primary" />
+                <MoneyText variant="h5" component="p" amount={totals.unsettled} suffix="₫" color="primary" fontWeight={700} />
+                <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
+                  <Chip size="small" label={`${totals.unsettledCount} khoản`} />
+                  {watermark ? (
+                    <Chip size="small" color="success" variant="outlined" label={`Đã chốt đến ${formatDateVn(watermark)}`} />
+                  ) : (
+                    <Chip size="small" variant="outlined" label="Chưa chốt lần nào" />
+                  )}
+                  <Chip size="small" variant="outlined" label={`Đã trả ${formatVnd(totals.settled)}₫`} />
+                </Stack>
+              </Box>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setEntryDialog({ open: true, entry: null })}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Thêm khoản
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => setSettleOpen(true)}
+                  disabled={totals.settlePreviewCount === 0}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Chốt · {formatVnd(totals.settlePreview)}₫
+                </Button>
               </Stack>
             </Stack>
+
+            {watermark && (
+              <Alert severity="info" sx={{ borderRadius: 1 }}>
+                Sổ đã chốt đến <strong>{formatDateVn(watermark)}</strong>. Khoản trong kỳ đã chốt bị khoá — huỷ ở{' '}
+                <em>Lịch sử thanh toán</em> nếu cần.
+              </Alert>
+            )}
+
+            <Divider />
+
+            <Stack spacing={1.75}>
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={status}
+                onChange={(_event, next) => changeStatus(next)}
+                aria-label="Lọc trạng thái thanh toán"
+                sx={statusToggleGroupSx}
+              >
+                <ToggleButton value="unsettled">Chưa thanh toán</ToggleButton>
+                <ToggleButton value="settled">Đã thanh toán</ToggleButton>
+                <ToggleButton value="all">Tất cả</ToggleButton>
+              </ToggleButtonGroup>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+                <TextField
+                  type="month"
+                  size="small"
+                  label="Lọc theo tháng"
+                  value={month}
+                  onChange={(event) => changeMonth(event.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ width: { xs: '100%', sm: 190 }, ...filledFilterFieldSx }}
+                />
+                <TextField
+                  type="date"
+                  size="small"
+                  label="Từ ngày"
+                  value={from}
+                  onChange={(event) => changeFrom(event.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ width: { xs: '100%', sm: 170 }, ...filledFilterFieldSx }}
+                />
+                <TextField
+                  type="date"
+                  size="small"
+                  label="Đến ngày"
+                  value={to}
+                  onChange={(event) => changeTo(event.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ width: { xs: '100%', sm: 170 }, ...filledFilterFieldSx }}
+                />
+                <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="baseline"
+                  flexWrap="wrap"
+                  useFlexGap
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                >
+                  {loading && <CircularProgress size={16} />}
+                  <Typography variant="body2" color="text.secondary">
+                    Tổng phát sinh {periodLabel(month, from, to)}:
+                  </Typography>
+                  <MoneyText amount={totals.monthTotal} suffix="₫" fontWeight={700} color="primary" sx={{ fontSize: '1.15rem' }} />
+                </Stack>
+              </Stack>
+            </Stack>
+
+            {groups.length === 0 ? (
+              <Alert severity="info" sx={{ borderRadius: 1 }}>
+                {emptyMessage}
+              </Alert>
+            ) : (
+              <>
+                <DayFolderList groups={groups} renderActions={entryActions} variant="embedded" />
+                <TablePagination
+                  component="div"
+                  count={pagination?.totalGroups ?? 0}
+                  page={Math.max(0, (page ?? 1) - 1)}
+                  onPageChange={changePage}
+                  rowsPerPage={pageSize}
+                  rowsPerPageOptions={[pageSize]}
+                  labelRowsPerPage="Mỗi trang"
+                  labelDisplayedRows={({ from: rowFrom, to: rowTo, count }) =>
+                    `${rowFrom}–${rowTo} / ${count !== -1 ? count : `hơn ${rowTo}`} ngày`
+                  }
+                  sx={{
+                    width: '100%',
+                    overflow: 'auto',
+                    borderTop: 1,
+                    borderColor: 'divider',
+                    '.MuiTablePagination-toolbar': { flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.5, px: 0 },
+                  }}
+                />
+              </>
+            )}
           </Stack>
         </Paper>
 
-        {/* ---------- Danh sách khoản theo ngày (folders) ---------- */}
-        {groups.length === 0 ? (
-          <Alert severity="info">{emptyMessage}</Alert>
-        ) : (
-          <>
-            <DayFolderList groups={groups} renderActions={entryActions} />
-            <TablePagination
-              component="div"
-              count={pagination?.totalGroups ?? 0}
-              page={Math.max(0, (page ?? 1) - 1)}
-              onPageChange={changePage}
-              rowsPerPage={pageSize}
-              rowsPerPageOptions={[pageSize]}
-              labelRowsPerPage="Mỗi trang"
-              labelDisplayedRows={({ from: rowFrom, to: rowTo, count }) =>
-                `${rowFrom}–${rowTo} / ${count !== -1 ? count : `hơn ${rowTo}`} ngày`
-              }
-              sx={{
-                width: '100%',
-                overflow: 'auto',
-                '.MuiTablePagination-toolbar': { flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.5 },
-              }}
-            />
-          </>
-        )}
-
-        {/* ---------- Lịch sử thanh toán ---------- */}
         <Paper elevation={0} sx={{ ...softPaperSx, p: 2 }}>
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
             Lịch sử thanh toán
