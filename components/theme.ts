@@ -31,8 +31,8 @@ export const theme = createTheme({
       },
     },
   },
-  // Max 4px — tránh góc bo “bong bóng” trên card/nút/input.
-  shape: { borderRadius: 4 },
+  // ~8px: mềm hơn 4px, vẫn không pill/bong bóng như UI cũ (12–24px+).
+  shape: { borderRadius: 8 },
   typography: {
     fontFamily: [
       '"Segoe UI"',
@@ -50,20 +50,20 @@ export const theme = createTheme({
   components: {
     MuiButton: {
       defaultProps: { disableElevation: true },
-      styleOverrides: { root: { borderRadius: 4 } },
+      styleOverrides: { root: { borderRadius: 8 } },
     },
     MuiPaper: {
       defaultProps: { elevation: 0 },
-      styleOverrides: { root: { borderRadius: 4 } },
+      styleOverrides: { root: { borderRadius: 8 } },
     },
     MuiChip: {
-      styleOverrides: { root: { borderRadius: 4 } },
+      styleOverrides: { root: { borderRadius: 8 } },
     },
     MuiOutlinedInput: {
-      styleOverrides: { root: { borderRadius: 4 } },
+      styleOverrides: { root: { borderRadius: 8 } },
     },
     MuiToggleButton: {
-      styleOverrides: { root: { borderRadius: 4 } },
+      styleOverrides: { root: { borderRadius: 8 } },
     },
     MuiTableCell: {
       styleOverrides: {

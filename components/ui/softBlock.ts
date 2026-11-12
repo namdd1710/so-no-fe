@@ -1,6 +1,6 @@
 import type { SxProps, Theme } from '@mui/material/styles';
 
-/** Khối giấy trắng trên canvas — shadow mềm như mockup, radius max 4px. */
+/** Khối giấy trắng trên canvas — shadow mềm; radius theo theme (~8px). */
 export const softPaperSx: SxProps<Theme> = {
   bgcolor: 'background.paper',
   borderRadius: 1,
@@ -23,7 +23,7 @@ export const statusToggleGroupSx: SxProps<Theme> = {
   '& .MuiToggleButtonGroup-grouped': {
     border: '0 !important',
     margin: 0,
-    borderRadius: '4px !important',
+    borderRadius: '8px !important',
     px: 1.75,
     py: 0.75,
     textTransform: 'none',
