@@ -8,6 +8,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
 
@@ -82,9 +83,11 @@ export default function FakePayButton() {
   return (
     <>
       {/* Nhãn cố định “Đã thanh toán”; style giữ như nút Thanh toán cũ (contained). */}
-      <Button variant="contained" color="primary" fullWidth onClick={handleOpen}>
-        Đã thanh toán
-      </Button>
+      <Tooltip title="Click để xác nhận đã thanh toán" arrow placement="top">
+        <Button variant="contained" color="primary" fullWidth onClick={handleOpen}>
+          Đã thanh toán
+        </Button>
+      </Tooltip>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs">
         <DialogTitle>{loading ? 'Đang thanh toán…' : 'Thanh toán'}</DialogTitle>
         <DialogContent>
