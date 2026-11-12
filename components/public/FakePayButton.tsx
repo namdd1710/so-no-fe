@@ -81,8 +81,8 @@ export default function FakePayButton() {
 
   return (
     <>
-      {/* Nhãn cố định “Đã thanh toán” như đã xong việc — bấm vào vẫn đi hết màn tiến trình. */}
-      <Button variant="outlined" color="primary" fullWidth onClick={handleOpen}>
+      {/* Nhãn cố định “Đã thanh toán”; style giữ như nút Thanh toán cũ (contained). */}
+      <Button variant="contained" color="primary" fullWidth onClick={handleOpen}>
         Đã thanh toán
       </Button>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs">
