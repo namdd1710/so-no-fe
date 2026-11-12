@@ -18,9 +18,24 @@ export default function PaymentHistory({ settlements }: { settlements: Item[] })
   const total = settlements.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <Accordion variant="outlined" disableGutters>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="payment-history" id="payment-history-summary">
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%', pr: 1 }}>
+    // Nằm trong khối giấy trắng của trang nên không tự vẽ viền: viền lồng trong
+    // khối trắng sẽ tạo cảm giác hai cái hộp lạp nhau.
+    <Accordion
+      disableGutters
+      elevation={0}
+      sx={{
+        bgcolor: 'transparent',
+        '&:before': { display: 'none' },
+        '&.Mui-expanded': { margin: 0 },
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon color="primary" />}
+        aria-controls="payment-history"
+        id="payment-history-summary"
+        sx={{ px: 0, minHeight: 48, '& .MuiAccordionSummary-content': { my: 1 } }}
+      >
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
           <Typography variant="subtitle2">Lịch sử đã thanh toán</Typography>
           <Typography variant="caption" color="text.secondary">
             {settlements.length} lần

@@ -4,6 +4,7 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import { useRouter } from 'next/navigation';
+import { filledFilterFieldSx } from '@/components/ui/softBlock';
 
 export default function MonthFilter({ value, basePath }: { value: string; basePath: string }) {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function MonthFilter({ value, basePath }: { value: string; basePa
         value={value}
         onChange={(event) => go(event.target.value)}
         slotProps={{ inputLabel: { shrink: true } }}
-        sx={{ width: 180 }}
+        sx={{ width: 180, ...filledFilterFieldSx }}
       />
       {value && (
         <Button size="small" onClick={() => go('')}>

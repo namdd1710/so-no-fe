@@ -32,8 +32,8 @@ type Props<T extends DayFolderEntry = DayFolderEntry> = {
   /** Admin: sửa/xoá. Public omits. */
   renderActions?: (entry: T) => ReactNode;
   /**
-   * `embedded` — hàng tint nằm trong 1 khối Paper lớn (giống mockup).
-   * `card` — mỗi ngày một soft card riêng (trang public).
+   * `embedded` — hàng tint nằm trong 1 khối Paper trắng lớn (admin + trang public).
+   * `card` — mỗi ngày một soft card riêng, dùng khi không có khối bao ngoài.
    */
   variant?: 'embedded' | 'card';
 };

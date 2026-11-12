@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -11,6 +12,7 @@ import MoneyText from '@/components/ledger/MoneyText';
 import FakePayButton from '@/components/public/FakePayButton';
 import MonthFilter from '@/components/public/MonthFilter';
 import PaymentHistory from '@/components/public/PaymentHistory';
+import { softPaperSx } from '@/components/ui/softBlock';
 import { fetchPublic } from '@/lib/api';
 import { formatDateVn, formatMonthVn } from '@/lib/format';
 import type { PublicLedgerResponse } from '@/lib/types';
@@ -63,77 +65,89 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
 
   const hasDebt = data.totals.unsettled !== 0;
   const month = sp.month;
+  const periodLabel = month ? formatMonthVn(month) : 'tất cả';
 
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100dvh' }}>
       <Container maxWidth="sm" sx={{ px: { xs: 1.5, sm: 2 }, py: { xs: 2, sm: 4 } }}>
         <Stack spacing={2}>
-          {/* ---------- Header ---------- */}
-          <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 } }}>
-            <Typography variant="overline" color="text.secondary">
-              Sổ nợ
-            </Typography>
-            <Typography variant="h5" component="h1" sx={{ wordBreak: 'break-word' }}>
-              {data.name}
-            </Typography>
-
-            <Box sx={{ mt: 2, bgcolor: 'action.hover', borderRadius: 1, px: 2, py: 1.75 }}>
-              <Typography variant="overline" color="text.secondary">
-                {hasDebt ? 'Còn nợ' : 'Đã thanh toán đủ'}
-              </Typography>
-              <MoneyText variant="h4" component="p" amount={data.totals.unsettled} suffix="₫" />
-              <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1 }}>
-                <Chip size="small" label={`${data.totals.unsettledCount} khoản chưa thanh toán`} />
-                {data.watermark && (
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    color="success"
-                    label={`Đã chốt đến ${formatDateVn(data.watermark)}`}
-                  />
-                )}
-              </Stack>
-            </Box>
-            {hasDebt && (
-              <Box sx={{ mt: 2 }}>
-                <FakePayButton />
-              </Box>
-            )}
-          </Paper>
-
-          {hasDebt === false && (
-            <Paper variant="outlined" sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                Hiện không có khoản nào chưa thanh toán.
-                {data.watermark ? ` Sổ đã được chốt đến ${formatDateVn(data.watermark)}.` : ''}
-              </Typography>
-            </Paper>
-          )}
-
-          {/* ---------- Lọc tháng ---------- */}
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={1.5}>
-              <MonthFilter value={month ?? ''} basePath={`/s/${code}`} />
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="body2" color="text.secondary">
-                  Tổng phát sinh {month ? formatMonthVn(month) : 'tất cả'}
+          {/* Một khối trắng duy nhất như trang admin: tên → tổng → lọc → khoản theo ngày.
+              Nhờ nền trắng mà các hàng tint xanh mới nổi (trước đây các khối rời
+              nhau chỉ có viền, đặt trên canvas xám nên trông nhạt nhoà). */}
+          <Paper elevation={0} sx={{ ...softPaperSx, p: { xs: 2, sm: 2.5 } }}>
+            <Stack spacing={2.25}>
+              {/* ---------- Header ---------- */}
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Sổ nợ
                 </Typography>
-                <MoneyText amount={data.totals.monthTotal} suffix="₫" fontWeight={700} />
+                <Typography variant="h5" component="h1" sx={{ wordBreak: 'break-word' }}>
+                  {data.name}
+                </Typography>
+              </Box>
+
+              <Box sx={{ bgcolor: 'rgba(21, 101, 192, 0.06)', borderRadius: 1, px: 2, py: 1.75 }}>
+                <Typography variant="overline" color="text.secondary">
+                  {hasDebt ? 'Còn nợ' : 'Đã thanh toán đủ'}
+                </Typography>
+                <MoneyText variant="h4" component="p" amount={data.totals.unsettled} suffix="₫" />
+                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1 }}>
+                  <Chip size="small" label={`${data.totals.unsettledCount} khoản chưa thanh toán`} />
+                  {data.watermark && (
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color="success"
+                      label={`Đã chốt đến ${formatDateVn(data.watermark)}`}
+                    />
+                  )}
+                </Stack>
+              </Box>
+
+              {hasDebt ? (
+                <FakePayButton />
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Hiện không có khoản nào chưa thanh toán.
+                  {data.watermark ? ` Sổ đã được chốt đến ${formatDateVn(data.watermark)}.` : ''}
+                </Typography>
+              )}
+
+              <Divider />
+
+              {/* ---------- Lọc tháng ---------- */}
+              <Stack spacing={1.75}>
+                <MonthFilter value={month ?? ''} basePath={`/s/${code}`} />
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  flexWrap="wrap"
+                  useFlexGap
+                  spacing={1}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Tổng phát sinh {periodLabel}
+                  </Typography>
+                  <MoneyText amount={data.totals.monthTotal} suffix="₫" fontWeight={700} color="primary" />
+                </Stack>
               </Stack>
+
+              {/* ---------- Khoản theo ngày (folder list) ---------- */}
+              {data.groups.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  {month ? `Không có khoản nào trong ${periodLabel}.` : 'Chưa có khoản nào.'}
+                </Typography>
+              ) : (
+                <DayFolderList groups={data.groups} variant="embedded" />
+              )}
             </Stack>
           </Paper>
 
-          {/* ---------- Khoản theo ngày (folder list) ---------- */}
-          {data.groups.length === 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ px: 0.5 }}>
-              {month ? `Không có khoản nào trong ${formatMonthVn(month)}.` : 'Chưa có khoản nào.'}
-            </Typography>
-          ) : (
-            <DayFolderList groups={data.groups} />
-          )}
-
           {/* ---------- Lịch sử thanh toán ---------- */}
-          <PaymentHistory settlements={data.settlements} />
+          <Paper elevation={0} sx={{ ...softPaperSx, px: 2, py: 1.5 }}>
+            <PaymentHistory settlements={data.settlements} />
+          </Paper>
 
           <Typography variant="caption" color="text.secondary" align="center" sx={{ pb: 2 }}>
             Sổ này được cập nhật tự động · Xem lúc {formatDateVn(data.today)}
