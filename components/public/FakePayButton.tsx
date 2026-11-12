@@ -46,7 +46,6 @@ export default function FakePayButton() {
   const [open, setOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [line, setLine] = useState('');
-  const [paid, setPaid] = useState(false);
 
   const loading = progress < 100;
 
@@ -60,10 +59,7 @@ export default function FakePayButton() {
     const timer = setInterval(() => {
       value = Math.min(100, value + 3 + Math.random() * 6);
       setProgress(Math.round(value));
-      if (value >= 100) {
-        clearInterval(timer);
-        setPaid(true);
-      }
+      if (value >= 100) clearInterval(timer);
     }, TICK_MS);
 
     return () => clearInterval(timer);
@@ -85,8 +81,9 @@ export default function FakePayButton() {
 
   return (
     <>
-      <Button variant={paid ? 'outlined' : 'contained'} color="primary" fullWidth onClick={handleOpen}>
-        {paid ? 'Đã thanh toán' : 'Thanh toán'}
+      {/* Nhãn cố định “Đã thanh toán” như đã xong việc — bấm vào vẫn đi hết màn tiến trình. */}
+      <Button variant="outlined" color="primary" fullWidth onClick={handleOpen}>
+        Đã thanh toán
       </Button>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs">
         <DialogTitle>{loading ? 'Đang thanh toán…' : 'Thanh toán'}</DialogTitle>
