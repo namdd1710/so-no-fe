@@ -110,6 +110,8 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
                   <PayQr
                     code={code}
                     amount={data.totals.unsettled}
+                    fromDate={data.watermark}
+                    toDate={data.today}
                     confirmations={data.confirmations ?? []}
                   />
                   {/* Tách hẳn khối QR ở trên để nút "Đã thanh toán" không bị hiểu

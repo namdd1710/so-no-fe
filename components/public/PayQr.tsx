@@ -8,7 +8,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
-import { formatDateTimeVn, formatVnd } from '@/lib/format';
+import { formatDateVn, formatDateTimeVn, formatVnd } from '@/lib/format';
 import type { ConfirmationJson } from '@/lib/types';
 
 /** Ảnh QR nhận tiền MoMo đặt sẵn trong `public/`. */
@@ -19,6 +19,10 @@ const RECEIVER_PHONE = '0352611710';
 type Props = {
   code: string;
   amount: number;
+  /** Ngày đã chốt gần nhất — mốc bắt đầu của kỳ đang nợ. */
+  fromDate?: string | null;
+  /** Hôm nay — mốc kết thúc của kỳ đang nợ. */
+  toDate: string;
   /** Lời báo trước đây (kèm phản hồi của chủ nợ) — server render sẵn. */
   confirmations?: ConfirmationJson[];
 };
@@ -34,7 +38,7 @@ function statusChip(item: ConfirmationJson) {
  * bấm lấy QR → hiện ảnh QR → ô bình luận → gửi lời báo; chủ nợ xác nhận kèm
  * phản hồi và con nợ đọc lại được ngay dưới đây.
  */
-export default function PayQr({ code, amount, confirmations = [] }: Props) {
+export default function PayQr({ code, amount, fromDate, toDate, confirmations = [] }: Props) {
   const [showQr, setShowQr] = useState(false);
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
@@ -42,7 +46,10 @@ export default function PayQr({ code, amount, confirmations = [] }: Props) {
   const [sent, setSent] = useState<ConfirmationJson[]>([]);
   const [imageError, setImageError] = useState(false);
 
-  const memo = `SO NO ${code}`;
+  // Nội dung chuyển khoản nói rõ trả nợ cho kỳ nào, thay vì mã sổ.
+  const memo = fromDate
+    ? `TRA NO TU ${formatDateVn(fromDate)} DEN ${formatDateVn(toDate)}`
+    : `TRA NO DEN ${formatDateVn(toDate)}`;
   const history = [...sent, ...confirmations];
 
   async function submit(event: React.FormEvent) {
@@ -134,7 +141,7 @@ export default function PayQr({ code, amount, confirmations = [] }: Props) {
               <Typography variant="body2" color="text.secondary">
                 {RECEIVER_NAME}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
                 Nội dung: {memo}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -147,7 +154,7 @@ export default function PayQr({ code, amount, confirmations = [] }: Props) {
             <Stack spacing={1.5}>
               <TextField
                 label="Bình luận cho chủ nợ"
-                placeholder="Ví dụ: mình chuyển lúc 20h, nội dung SO NO…"
+                placeholder="Ví dụ: mình chuyển lúc 20h, nội dung TRẢ NỢ…"
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
                 multiline
