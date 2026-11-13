@@ -131,7 +131,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                 onClick={() => selection.toggleMany(selectableIds, true)}
                 disabled={selectableIds.length === 0 || selection.selected.size === selectableIds.length}
               >
-                Chọn tất cả
+                Chọn cả trang
               </Button>
               <Button
                 size="small"

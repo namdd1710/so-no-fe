@@ -54,13 +54,17 @@ type FilterState = {
   from: string;
   to: string;
   page: number;
+  pageSize: number;
 };
+
+/** Số ngày mỗi trang — khớp giới hạn `pageSize` của API (1..50). */
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 function buildQuery(next: FilterState) {
   const params = new URLSearchParams();
   params.set('status', next.status);
   params.set('page', String(next.page));
-  params.set('pageSize', '10');
+  params.set('pageSize', String(next.pageSize));
   if (next.from || next.to) {
     if (next.from) params.set('from', next.from);
     if (next.to) params.set('to', next.to);
@@ -88,6 +92,7 @@ export default function DebtorDetailClient({ initial }: Props) {
   const [from, setFrom] = useState(initial.from ?? '');
   const [to, setTo] = useState(initial.to ?? '');
   const [page, setPage] = useState(initial.pagination?.page ?? 1);
+  const [pageSize, setPageSize] = useState(initial.pagination?.pageSize ?? 10);
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<Snack>({ open: false, message: '', severity: 'success' });
 
@@ -102,7 +107,6 @@ export default function DebtorDetailClient({ initial }: Props) {
 
   const { debtor, totals, watermark, groups, settlements, today, pagination } = ledger;
   const activeSettlements = settlements.filter((settlement) => settlement.status === 'active');
-  const pageSize = pagination?.pageSize ?? 10;
 
   const notify = (message: string, severity: Snack['severity'] = 'success') => setSnack({ open: true, message, severity });
 
@@ -126,6 +130,7 @@ export default function DebtorDetailClient({ initial }: Props) {
     setFrom(result.data.from ?? '');
     setTo(result.data.to ?? '');
     setPage(result.data.pagination?.page ?? next.page);
+    setPageSize(result.data.pagination?.pageSize ?? next.pageSize);
   }
 
   function currentFilters(overrides: Partial<FilterState> = {}): FilterState {
@@ -135,8 +140,16 @@ export default function DebtorDetailClient({ initial }: Props) {
       from,
       to,
       page,
+      pageSize,
       ...overrides,
     };
+  }
+
+  /** Đổi số ngày mỗi trang → quay về trang 1 để không lạc trang. */
+  function changePageSize(next: number) {
+    setPageSize(next);
+    setPage(1);
+    void load(currentFilters({ pageSize: next, page: 1 }));
   }
 
   function changeStatus(next: Status | null) {
@@ -520,8 +533,9 @@ export default function DebtorDetailClient({ initial }: Props) {
                   page={Math.max(0, (page ?? 1) - 1)}
                   onPageChange={changePage}
                   rowsPerPage={pageSize}
-                  rowsPerPageOptions={[pageSize]}
-                  labelRowsPerPage="Mỗi trang"
+                  rowsPerPageOptions={PAGE_SIZE_OPTIONS}
+                  onRowsPerPageChange={(event) => changePageSize(Number(event.target.value))}
+                  labelRowsPerPage="Số ngày mỗi trang"
                   labelDisplayedRows={({ from: rowFrom, to: rowTo, count }) =>
                     `${rowFrom}–${rowTo} / ${count !== -1 ? count : `hơn ${rowTo}`} ngày`
                   }
