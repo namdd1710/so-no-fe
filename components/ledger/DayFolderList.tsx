@@ -12,6 +12,19 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import MoneyText from '@/components/ledger/MoneyText';
 import { dayRowSx } from '@/components/ui/softBlock';
+
+/**
+ * Ô số/tiền: có vách ngăn mảnh bên trái để biết số nào thuộc cột nào,
+ * và kéo hết chiều cao hàng để các vách nối liền nhau.
+ */
+const numberCellSx = {
+  alignSelf: 'stretch',
+  display: 'flex',
+  alignItems: 'center',
+  borderLeft: 1,
+  borderColor: 'divider',
+  pl: 1.5,
+};
 import { formatDateVn, formatVnd, weekdayVn } from '@/lib/format';
 
 export type DayFolderEntry = {
@@ -73,9 +86,11 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
 
   const hasActions = Boolean(renderActions);
   // Bảng desktop: danh mục | ghi chú | số lượng | giá | tổng | (sửa/xoá).
-  // Cột số/tiền dùng bề rộng cố định để các hàng thẳng cột với nhau.
+  // MỌI cột đều cố định bề rộng: cột `auto` sẽ co về 0 ở hàng tiêu đề (không có
+  // icon) và làm nhãn lệch hẳn so với số liệu bên dưới.
+  const ACTION_W = 76;
   const columns = 'minmax(0, 1.2fr) minmax(0, 1.5fr) 56px 112px 128px';
-  const desktopGrid = hasActions ? `${columns} auto` : columns;
+  const desktopGrid = hasActions ? `${columns} ${ACTION_W}px` : columns;
 
   return (
     <Stack spacing={embedded ? 1 : 1.5}>
@@ -167,15 +182,21 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                 <Typography variant="caption" color="text.secondary" fontWeight={600}>
                   Ghi chú
                 </Typography>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textAlign: 'center' }}>
-                  SL
-                </Typography>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textAlign: 'right' }}>
-                  Giá
-                </Typography>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textAlign: 'right' }}>
-                  Tổng
-                </Typography>
+                <Box sx={{ ...numberCellSx, justifyContent: 'center' }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    SL
+                  </Typography>
+                </Box>
+                <Box sx={{ ...numberCellSx, justifyContent: 'flex-end' }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    Giá
+                  </Typography>
+                </Box>
+                <Box sx={{ ...numberCellSx, justifyContent: 'flex-end' }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    Tổng
+                  </Typography>
+                </Box>
                 {hasActions && <Box />}
               </Box>
 
@@ -211,14 +232,12 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                     <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
                       {entry.note || '—'}
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
-                    >
-                      {entry.quantity ?? 1}
-                    </Typography>
-                    <Box sx={{ textAlign: 'right' }}>
+                    <Box sx={{ ...numberCellSx, justifyContent: 'center' }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                        {entry.quantity ?? 1}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ ...numberCellSx, justifyContent: 'flex-end' }}>
                       <MoneyText
                         amount={entry.unitAmount ?? entry.amount}
                         suffix="₫"
@@ -226,7 +245,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                         sx={{ fontVariantNumeric: 'tabular-nums' }}
                       />
                     </Box>
-                    <Box sx={{ textAlign: 'right' }}>
+                    <Box sx={{ ...numberCellSx, justifyContent: 'flex-end' }}>
                       <MoneyText amount={entry.amount} suffix="₫" fontWeight={600} />
                     </Box>
                     {hasActions && (
