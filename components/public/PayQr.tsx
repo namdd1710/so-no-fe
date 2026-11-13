@@ -24,7 +24,7 @@ type PublicQr = {
 type Props = {
   code: string;
   amount: number;
-  /** Ngày đã chốt gần nhất — mốc bắt đầu của kỳ đang nợ. */
+  /** Ngày sớm nhất của phần còn nợ — mốc bắt đầu của kỳ đang nợ. */
   fromDate?: string | null;
   /** Hôm nay — mốc kết thúc của kỳ đang nợ. */
   toDate: string;
@@ -53,10 +53,9 @@ export default function PayQr({ code, amount, fromDate, toDate, confirmations = 
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<ConfirmationJson[]>([]);
 
-  // Nội dung chuyển khoản nói rõ trả nợ cho kỳ nào.
-  const memo = fromDate
-    ? `TRA NO TU ${formatDateVn(fromDate)} DEN ${formatDateVn(toDate)}`
-    : `TRA NO DEN ${formatDateVn(toDate)}`;
+  // Nội dung chuyển khoản luôn đủ "từ ngày … đến ngày …"; sổ chưa có khoản nào
+  // thì lấy chính hôm nay làm mốc đầu.
+  const memo = `TRA NO TU ${formatDateVn(fromDate ?? toDate)} DEN ${formatDateVn(toDate)}`;
   const history = [...sent, ...confirmations];
 
   async function openQr() {

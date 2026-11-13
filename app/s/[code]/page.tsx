@@ -110,7 +110,7 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
                   <PayQr
                     code={code}
                     amount={data.totals.unsettled}
-                    fromDate={data.watermark}
+                    fromDate={data.debtFrom}
                     toDate={data.today}
                     confirmations={data.confirmations ?? []}
                   />
