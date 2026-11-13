@@ -10,7 +10,6 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
-import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
@@ -19,13 +18,15 @@ import MoneyText from '@/components/ledger/MoneyText';
 import { dayRowSx, softIconButtonSx } from '@/components/ui/softBlock';
 
 /**
- * Nhãn cho khoản theo khoảng: "02/10 → 30/10/2026".
- * Ngày bắt đầu viết ngắn (dd/MM) để nhãn không bị cắt trong cột hẹp.
+ * Nhãn ngày của cả folder ngày.
+ * Mọi khoản trong ngày đều là khoản theo khoảng → hiện "02/10/2026 → 30/10/2026"
+ * để phạm vi nằm ở tiêu đề, các mục con không phải lặp lại ngày.
  */
-function rangeLabel(entry: { startDate?: string | null; endDate?: string | null }): string {
-  if (!entry.startDate) return 'Khoảng ngày';
-  const start = formatDateVn(entry.startDate).slice(0, 5);
-  return `${start} → ${formatDateVn(entry.endDate)}`;
+function groupDateLabel(group: { date: string; entries: DayFolderEntry[] }): string {
+  const ranges = group.entries.filter((entry) => entry.startDate);
+  if (ranges.length === 0 || ranges.length !== group.entries.length) return formatDateVn(group.date);
+  const start = ranges.map((entry) => entry.startDate!).sort()[0]!;
+  return `${formatDateVn(start)} → ${formatDateVn(group.date)}`;
 }
 
 /**
@@ -218,7 +219,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
             >
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="subtitle2" component="span" fontWeight={600}>
-                  {formatDateVn(group.date)}
+                  {groupDateLabel(group)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                   {weekdayVn(group.date)} · {group.count} khoản
@@ -330,14 +331,6 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                       <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
                         {entry.category}
                       </Typography>
-                      {entry.entryType === 'range' && (
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={rangeLabel(entry)}
-                          sx={{ mt: 0.5, height: 20, fontSize: 11 }}
-                        />
-                      )}
                     </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
                       {entry.note || '—'}
@@ -391,14 +384,6 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                         <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
                           {entry.category}
                         </Typography>
-                        {entry.entryType === 'range' && (
-                          <Chip
-                            size="small"
-                            variant="outlined"
-                            label={rangeLabel(entry)}
-                            sx={{ mt: 0.5, height: 20, fontSize: 11 }}
-                          />
-                        )}
                         {entry.note ? (
                           <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
                             {entry.note}
