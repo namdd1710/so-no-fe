@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -9,10 +10,12 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import MoneyText from '@/components/ledger/MoneyText';
-import { dayRowSx } from '@/components/ui/softBlock';
+import { dayRowSx, softIconButtonSx } from '@/components/ui/softBlock';
 
 /**
  * Nhãn cho khoản theo khoảng: "02/10 → 30/10/2026".
@@ -74,6 +77,8 @@ type Props<T extends DayFolderEntry = DayFolderEntry> = {
    * `card` — mỗi ngày một soft card riêng, dùng khi không có khối bao ngoài.
    */
   variant?: 'embedded' | 'card';
+  /** Admin: thêm một khoản mới cho đúng ngày này. */
+  onAddToDay?: (date: string) => void;
   /** Chọn nhiều khoản để xoá hàng loạt (chỉ admin truyền vào). */
   selection?: {
     selected: Set<string>;
@@ -88,6 +93,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
   renderActions,
   variant = 'card',
   selection,
+  onAddToDay,
 }: Props<T>) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const embedded = variant === 'embedded';
@@ -214,7 +220,25 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                   {weekdayVn(group.date)} · {group.count} khoản
                 </Typography>
               </Box>
-              <MoneyText amount={group.total} suffix="₫" fontWeight={700} color="primary" />
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <MoneyText amount={group.total} suffix="₫" fontWeight={700} color="primary" />
+                {onAddToDay && (
+                  <Tooltip title={`Thêm khoản cho ngày ${formatDateVn(group.date)}`}>
+                    <IconButton
+                      size="small"
+                      aria-label={`Thêm khoản cho ngày ${formatDateVn(group.date)}`}
+                      onClick={(event) => {
+                        // Đừng để cú bấm vừa thêm khoản vừa mở/đóng ngày.
+                        event.stopPropagation();
+                        onAddToDay(group.date);
+                      }}
+                      sx={softIconButtonSx}
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Stack>
             </AccordionSummary>
 
             <AccordionDetails sx={{ p: 0, bgcolor: 'background.paper' }}>

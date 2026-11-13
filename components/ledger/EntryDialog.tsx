@@ -31,6 +31,8 @@ type Props = {
   categories: string[];
   today: string;
   onSaved: (message: string) => void;
+  /** Ngày gợi ý khi thêm mới (nút + trong một ngày cụ thể). */
+  initialDate?: string;
 };
 
 type Mode = 'single' | 'range';
@@ -46,7 +48,16 @@ function rangeDays(from: string, to: string): number {
   return Math.round((end - start) / 86_400_000) + 1;
 }
 
-export default function EntryDialog({ open, onClose, debtorId, entry, categories, today, onSaved }: Props) {
+export default function EntryDialog({
+  open,
+  onClose,
+  debtorId,
+  entry,
+  categories,
+  today,
+  onSaved,
+  initialDate,
+}: Props) {
   const editing = Boolean(entry);
   const [mode, setMode] = useState<Mode>('single');
   const [date, setDate] = useState(today);
@@ -64,7 +75,7 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
     if (!open) return;
     // Khoản đang gắn khoảng thì mở lại đúng chế độ khoảng để sửa được cả hai đầu.
     setMode(entry?.startDate ? 'range' : 'single');
-    setDate(entry?.date ?? today);
+    setDate(entry?.date ?? initialDate ?? today);
     setFromDate(entry?.startDate ?? entry?.date ?? today);
     setToDate(entry?.date ?? today);
     setCategory(entry?.category ?? '');
@@ -74,7 +85,7 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
     setNegative((entry?.amount ?? 0) < 0);
     setNote(entry?.note ?? '');
     setError(null);
-  }, [open, entry, today]);
+  }, [open, entry, today, initialDate]);
 
   const unitAmount = (Number(digits) || 0) * (negative ? -1 : 1);
   const qty = Math.max(1, Math.floor(Number(quantity) || 1));

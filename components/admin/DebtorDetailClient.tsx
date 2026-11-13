@@ -96,7 +96,12 @@ export default function DebtorDetailClient({ initial }: Props) {
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<Snack>({ open: false, message: '', severity: 'success' });
 
-  const [entryDialog, setEntryDialog] = useState<{ open: boolean; entry: EntryJson | null }>({ open: false, entry: null });
+  // `date` = ngày gợi ý khi thêm mới, để nút + trong một ngày mở đúng ngày đó.
+  const [entryDialog, setEntryDialog] = useState<{ open: boolean; entry: EntryJson | null; date: string }>({
+    open: false,
+    entry: null,
+    date: initial.today,
+  });
   const [settleOpen, setSettleOpen] = useState(false);
   const [debtorDialogOpen, setDebtorDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<EntryJson | null>(null);
@@ -303,7 +308,11 @@ export default function DebtorDetailClient({ initial }: Props) {
     return (
       <Stack direction="row" spacing={0.25} justifyContent="flex-end">
         <Tooltip title="Sửa">
-          <IconButton size="small" onClick={() => setEntryDialog({ open: true, entry })} aria-label="Sửa khoản">
+          <IconButton
+            size="small"
+            onClick={() => setEntryDialog({ open: true, entry, date: entry.date })}
+            aria-label="Sửa khoản"
+          >
             <EditOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -408,7 +417,7 @@ export default function DebtorDetailClient({ initial }: Props) {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => setEntryDialog({ open: true, entry: null })}
+                  onClick={() => setEntryDialog({ open: true, entry: null, date: today })}
                   sx={{ whiteSpace: 'nowrap' }}
                 >
                   Thêm khoản
@@ -526,6 +535,7 @@ export default function DebtorDetailClient({ initial }: Props) {
                   renderActions={entryActions}
                   variant="embedded"
                   selection={{ selected, toggle: toggleSelect, toggleMany: toggleSelectMany }}
+                  onAddToDay={(date) => setEntryDialog({ open: true, entry: null, date })}
                 />
                 <TablePagination
                   component="div"
@@ -601,7 +611,8 @@ export default function DebtorDetailClient({ initial }: Props) {
         debtorId={debtor.id}
         categories={ledger.categories}
         today={today}
-        onClose={() => setEntryDialog({ open: false, entry: null })}
+        initialDate={entryDialog.date}
+        onClose={() => setEntryDialog({ open: false, entry: null, date: today })}
         onSaved={(message) => {
           notify(message);
           reload();
