@@ -147,6 +147,38 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
             </AccordionSummary>
 
             <AccordionDetails sx={{ p: 0, bgcolor: 'background.paper' }}>
+              {/* Tiêu đề cột — desktop thôi, mobile xếp dọc nên không cần. */}
+              <Box
+                sx={{
+                  display: { xs: 'none', sm: 'grid' },
+                  gridTemplateColumns: desktopGrid,
+                  columnGap: 2,
+                  alignItems: 'center',
+                  px: 2,
+                  pt: 1.25,
+                  pb: 0.25,
+                  borderTop: 1,
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                  Danh mục
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                  Ghi chú
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textAlign: 'center' }}>
+                  SL
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textAlign: 'right' }}>
+                  Giá
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textAlign: 'right' }}>
+                  Tổng
+                </Typography>
+                {hasActions && <Box />}
+              </Box>
+
               <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                 {group.entries.map((entry, index) => (
                   <Box
