@@ -91,7 +91,9 @@ export default function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      {/* MuiPaper cho AppBar borderRadius 8; trên mobile thanh này chạm 2 mép màn hình
+          nên bo góc chỉ tạo khe hở xấu — để vuông ở xs, giữ bo từ sm trở lên. */}
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, borderRadius: { xs: 0, sm: 1 } }}>
         <Toolbar sx={{ gap: 1 }}>
           <IconButton
             color="inherit"
