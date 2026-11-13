@@ -72,9 +72,10 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
   const collapseAll = () => setExpanded({});
 
   const hasActions = Boolean(renderActions);
-  const desktopGrid = hasActions
-    ? 'minmax(0, 1.2fr) minmax(0, 1.5fr) auto auto'
-    : 'minmax(0, 1.2fr) minmax(0, 1.5fr) auto';
+  // Bảng desktop: danh mục | ghi chú | số lượng | giá | tổng | (sửa/xoá).
+  // Cột số/tiền dùng bề rộng cố định để các hàng thẳng cột với nhau.
+  const columns = 'minmax(0, 1.2fr) minmax(0, 1.5fr) 56px 112px 128px';
+  const desktopGrid = hasActions ? `${columns} auto` : columns;
 
   return (
     <Stack spacing={embedded ? 1 : 1.5}>
@@ -178,13 +179,23 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                     <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
                       {entry.note || '—'}
                     </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
+                    >
+                      {entry.quantity ?? 1}
+                    </Typography>
                     <Box sx={{ textAlign: 'right' }}>
-                      <MoneyText amount={entry.amount} suffix="₫" />
-                      {(entry.quantity ?? 1) > 1 && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {formatVnd(entry.unitAmount ?? entry.amount)}₫ × {entry.quantity}
-                        </Typography>
-                      )}
+                      <MoneyText
+                        amount={entry.unitAmount ?? entry.amount}
+                        suffix="₫"
+                        color="text.secondary"
+                        sx={{ fontVariantNumeric: 'tabular-nums' }}
+                      />
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <MoneyText amount={entry.amount} suffix="₫" fontWeight={600} />
                     </Box>
                     {hasActions && (
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>{renderActions?.(entry)}</Box>
@@ -227,7 +238,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                         <MoneyText amount={entry.amount} suffix="₫" fontWeight={600} display="block" />
                         {(entry.quantity ?? 1) > 1 && (
                           <Typography variant="caption" color="text.secondary" display="block">
-                            {formatVnd(entry.unitAmount ?? entry.amount)}₫ × {entry.quantity}
+                            {entry.quantity} × {formatVnd(entry.unitAmount ?? entry.amount)}₫
                           </Typography>
                         )}
                       </Box>
