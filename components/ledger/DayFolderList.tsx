@@ -7,6 +7,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -48,6 +49,8 @@ export type DayFolderEntry = {
   startDate?: string | null;
   /** Ngày kết thúc của khoảng. */
   endDate?: string | null;
+  /** `false` = thuộc kỳ đã chốt, không chọn để xoá được. */
+  editable?: boolean;
   note: string;
 };
 
@@ -67,6 +70,12 @@ type Props<T extends DayFolderEntry = DayFolderEntry> = {
    * `card` — mỗi ngày một soft card riêng, dùng khi không có khối bao ngoài.
    */
   variant?: 'embedded' | 'card';
+  /** Chọn nhiều khoản để xoá hàng loạt (chỉ admin truyền vào). */
+  selection?: {
+    selected: Set<string>;
+    toggle: (id: string) => void;
+    toggleMany: (ids: string[], next: boolean) => void;
+  };
 };
 
 /** Accordion danh sách khoản theo ngày — mặc định thu gọn hết. */
@@ -74,6 +83,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
   groups,
   renderActions,
   variant = 'card',
+  selection,
 }: Props<T>) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const embedded = variant === 'embedded';
@@ -95,22 +105,54 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
   const collapseAll = () => setExpanded({});
 
   const hasActions = Boolean(renderActions);
-  // Bảng desktop: danh mục | ghi chú | số lượng | giá | tổng | (sửa/xoá).
+  const selectable = Boolean(selection);
+  // Cột chọn khoản (checkbox) chỉ có khi admin truyền `selection`.
+  const lead = selectable ? '36px ' : '';
+  // Bảng desktop: [chọn] | danh mục | ghi chú | số lượng | giá | tổng | (sửa/xoá).
   // MỌI cột đều cố định bề rộng: cột `auto` sẽ co về 0 ở hàng tiêu đề (không có
   // icon) và làm nhãn lệch hẳn so với số liệu bên dưới.
   const ACTION_W = 76;
-  const columns = 'minmax(0, 1.2fr) minmax(0, 1.5fr) 56px 112px 128px';
+  const columns = `${lead}minmax(0, 1.2fr) minmax(0, 1.5fr) 56px 112px 128px`;
   const desktopGrid = hasActions ? `${columns} ${ACTION_W}px` : columns;
+  const selectableIds = groups.flatMap((group) =>
+    group.entries.filter((entry) => entry.editable !== false).map((entry) => entry.id),
+  );
 
   return (
     <Stack spacing={embedded ? 1 : 1.5}>
-      <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
-        <Button size="small" variant="text" color="primary" onClick={expandAll}>
-          Mở tất cả
-        </Button>
-        <Button size="small" variant="text" color="primary" onClick={collapseAll}>
-          Đóng tất cả
-        </Button>
+      <Stack direction="row" spacing={1} justifyContent="space-between" flexWrap="wrap" useFlexGap>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          {selection && (
+            <>
+              <Button
+                size="small"
+                variant="text"
+                color="primary"
+                onClick={() => selection.toggleMany(selectableIds, true)}
+                disabled={selectableIds.length === 0 || selection.selected.size === selectableIds.length}
+              >
+                Chọn tất cả
+              </Button>
+              <Button
+                size="small"
+                variant="text"
+                color="primary"
+                onClick={() => selection.toggleMany(selectableIds, false)}
+                disabled={selection.selected.size === 0}
+              >
+                Bỏ chọn
+              </Button>
+            </>
+          )}
+        </Stack>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Button size="small" variant="text" color="primary" onClick={expandAll}>
+            Mở tất cả
+          </Button>
+          <Button size="small" variant="text" color="primary" onClick={collapseAll}>
+            Đóng tất cả
+          </Button>
+        </Stack>
       </Stack>
 
       {groups.map((group) => {
@@ -186,6 +228,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                   borderColor: 'divider',
                 }}
               >
+                {selectable && <Box />}
                 <Typography variant="caption" color="text.secondary" fontWeight={600}>
                   Danh mục
                 </Typography>
@@ -226,6 +269,16 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                       ...(index === 0 ? { borderTopColor: 'transparent' } : null),
                     }}
                   >
+                    {selection && (
+                      <Checkbox
+                        size="small"
+                        checked={selection.selected.has(entry.id)}
+                        onChange={() => selection.toggle(entry.id)}
+                        disabled={entry.editable === false}
+                        slotProps={{ input: { 'aria-label': `Chọn khoản ${entry.category}` } }}
+                        sx={{ p: 0.25 }}
+                      />
+                    )}
                     <Box sx={{ minWidth: 0 }}>
                       <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
                         {entry.category}
@@ -277,6 +330,16 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                     }}
                   >
                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+                      {selection && (
+                        <Checkbox
+                          size="small"
+                          checked={selection.selected.has(entry.id)}
+                          onChange={() => selection.toggle(entry.id)}
+                          disabled={entry.editable === false}
+                          slotProps={{ input: { 'aria-label': `Chọn khoản ${entry.category}` } }}
+                          sx={{ p: 0.25, mt: -0.5 }}
+                        />
+                      )}
                       <Box sx={{ minWidth: 0 }}>
                         <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
                           {entry.category}

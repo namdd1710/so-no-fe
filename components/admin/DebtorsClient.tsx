@@ -3,6 +3,7 @@
 import AddIcon from '@mui/icons-material/Add';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import UnarchiveOutlinedIcon from '@mui/icons-material/UnarchiveOutlined';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
@@ -22,6 +23,7 @@ import Typography from '@mui/material/Typography';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import DebtorDialog from './DebtorDialog';
 import MoneyText from '@/components/ledger/MoneyText';
 import { softIconButtonSx, softPaperSx } from '@/components/ui/softBlock';
@@ -46,6 +48,8 @@ export default function DebtorsClient({ initial }: Props) {
   const [includeArchived, setIncludeArchived] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dialog, setDialog] = useState<{ open: boolean; debtor: DebtorSummary | null }>({ open: false, debtor: null });
+  const [deleteTarget, setDeleteTarget] = useState<DebtorSummary | null>(null);
+  const [busy, setBusy] = useState(false);
   const [snack, setSnack] = useState<Snack>({ open: false, message: '', severity: 'success' });
 
   const notify = (message: string, severity: Snack['severity'] = 'success') => setSnack({ open: true, message, severity });
@@ -89,6 +93,20 @@ export default function DebtorsClient({ initial }: Props) {
     });
     if (!result.ok) return notify(result.message ?? 'Không cập nhật được', 'error');
     notify(debtor.active ? 'Đã lưu trữ con nợ' : 'Đã bỏ lưu trữ');
+    void load(includeArchived);
+  }
+
+  async function confirmDeleteDebtor() {
+    if (!deleteTarget) return;
+    setBusy(true);
+    const result = await apiFetch<{ deleted: { entries: number; settlements: number } }>(
+      `/api/debtors/${deleteTarget.id}`,
+      { method: 'DELETE' },
+    );
+    setBusy(false);
+    if (!result.ok) return notify(result.message ?? 'Không xoá được con nợ', 'error');
+    notify(`Đã xoá ${deleteTarget.name} cùng ${result.data?.deleted.entries ?? 0} khoản`);
+    setDeleteTarget(null);
     void load(includeArchived);
   }
 
@@ -200,6 +218,16 @@ export default function DebtorsClient({ initial }: Props) {
                           )}
                         </IconButton>
                       </Tooltip>
+                      <Tooltip title="Xoá con nợ">
+                        <IconButton
+                          size="small"
+                          onClick={() => setDeleteTarget(debtor)}
+                          aria-label={`Xoá ${debtor.name}`}
+                          sx={{ ...softIconButtonSx, color: 'error.main' }}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </Stack>
                   </Box>
                 </Stack>
@@ -227,6 +255,21 @@ export default function DebtorsClient({ initial }: Props) {
           void load(includeArchived);
           if (id && !dialog.debtor) router.push(`/admin/debtors/${id}`);
         }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Xoá con nợ này?"
+        description={
+          deleteTarget
+            ? `${deleteTarget.name} cùng toàn bộ ${deleteTarget.entryCount} khoản và lịch sử chốt sẽ bị xoá vĩnh viễn; link /s/${deleteTarget.accessCode} sẽ hết dùng được. Nếu chỉ muốn ẩn khỏi danh sách, hãy dùng Lưu trữ.`
+            : undefined
+        }
+        confirmLabel="Xoá con nợ"
+        confirmColor="error"
+        busy={busy}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteDebtor}
       />
 
       <Snackbar

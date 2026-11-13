@@ -95,6 +95,8 @@ export default function DebtorDetailClient({ initial }: Props) {
   const [settleOpen, setSettleOpen] = useState(false);
   const [debtorDialogOpen, setDebtorDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<EntryJson | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [voidTarget, setVoidTarget] = useState<SettlementJson | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -116,6 +118,9 @@ export default function DebtorDetailClient({ initial }: Props) {
     }
 
     setLedger(result.data);
+    // Bỏ khỏi vùng chọn những khoản không còn hiển thị sau khi lọc/tải lại.
+    const visible = new Set(result.data.entries.map((entry) => entry.id));
+    setSelected((prev) => new Set([...prev].filter((id) => visible.has(id))));
     setStatus(result.data.status ?? next.status);
     setMonth(result.data.month ?? '');
     setFrom(result.data.from ?? '');
@@ -192,6 +197,52 @@ export default function DebtorDetailClient({ initial }: Props) {
     });
     if (!result.ok) return notify(result.message ?? 'Không cập nhật được', 'error');
     notify(debtor.active ? 'Đã lưu trữ con nợ' : 'Đã bỏ lưu trữ');
+    reload();
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectMany(ids: string[], pick: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (pick) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  async function confirmBulkDelete() {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    setBusy(true);
+    const result = await apiFetch<{ deleted: number; skippedCount: number }>('/api/entries/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+    setBusy(false);
+    if (!result.ok) {
+      notify(result.message ?? 'Không xoá được các khoản đã chọn', 'error');
+      return;
+    }
+    const deleted = result.data?.deleted ?? 0;
+    const skippedCount = result.data?.skippedCount ?? 0;
+    setBulkDeleteOpen(false);
+    setSelected(new Set());
+    notify(
+      skippedCount > 0
+        ? `Đã xoá ${deleted} khoản; ${skippedCount} khoản thuộc kỳ đã chốt nên bỏ qua`
+        : `Đã xoá ${deleted} khoản`,
+      skippedCount > 0 ? 'info' : 'success',
+    );
     reload();
   }
 
@@ -435,7 +486,34 @@ export default function DebtorDetailClient({ initial }: Props) {
               </Alert>
             ) : (
               <>
-                <DayFolderList groups={groups} renderActions={entryActions} variant="embedded" />
+                {selected.size > 0 && (
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    alignItems="center"
+                    justifyContent="space-between"
+                    flexWrap="wrap"
+                    useFlexGap
+                    sx={{ bgcolor: 'rgba(21, 101, 192, 0.06)', borderRadius: 1, px: 2, py: 1 }}
+                  >
+                    <Typography variant="body2">Đã chọn {selected.size} khoản</Typography>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="error"
+                      startIcon={<DeleteOutlineIcon />}
+                      onClick={() => setBulkDeleteOpen(true)}
+                    >
+                      Xoá đã chọn
+                    </Button>
+                  </Stack>
+                )}
+                <DayFolderList
+                  groups={groups}
+                  renderActions={entryActions}
+                  variant="embedded"
+                  selection={{ selected, toggle: toggleSelect, toggleMany: toggleSelectMany }}
+                />
                 <TablePagination
                   component="div"
                   count={pagination?.totalGroups ?? 0}
@@ -540,6 +618,17 @@ export default function DebtorDetailClient({ initial }: Props) {
           notify(message);
           reload();
         }}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen && selected.size > 0}
+        title={`Xoá ${selected.size} khoản đã chọn?`}
+        description="Các khoản sẽ bị ẩn khỏi sổ và khỏi mọi tổng số. Khoản thuộc kỳ đã chốt sẽ được bỏ qua và báo lại. Thao tác này không hoàn tác được trên giao diện."
+        confirmLabel="Xoá khoản"
+        confirmColor="error"
+        busy={busy}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={confirmBulkDelete}
       />
 
       <ConfirmDialog
