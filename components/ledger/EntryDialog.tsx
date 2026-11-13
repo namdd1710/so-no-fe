@@ -34,6 +34,8 @@ type Props = {
   /** null = thêm mới, có giá trị = sửa. */
   entry: EntryJson | null;
   categories: string[];
+  /** Danh mục kèm đơn giá gần nhất — chọn là tự điền giá. */
+  categoryDefaults?: { name: string; unitPrice: number }[];
   today: string;
   onSaved: (message: string) => void;
   /** Ngày gợi ý khi thêm mới (nút + trong một ngày cụ thể). */
@@ -91,6 +93,7 @@ export default function EntryDialog({
   debtorId,
   entry,
   categories,
+  categoryDefaults,
   today,
   onSaved,
   initialDate,
@@ -129,6 +132,13 @@ export default function EntryDialog({
     ]);
     setError(null);
   }, [open, entry, today, initialDate, initialStartDate]);
+
+  // Đơn giá gợi ý theo danh mục, để chọn danh mục là điền sẵn giá lần trước.
+  const priceByCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of categoryDefaults ?? []) map.set(item.name, item.unitPrice);
+    return map;
+  }, [categoryDefaults]);
 
   // Khoảng ngày chỉ để mô tả phạm vi — vẫn MỘT bản ghi cho mỗi khoản.
   const days = useMemo(() => (mode === 'range' ? rangeDays(fromDate, toDate) : 1), [mode, fromDate, toDate]);
@@ -264,8 +274,32 @@ export default function EntryDialog({
                     freeSolo
                     options={categories}
                     value={row.category}
-                    onChange={(_, value) => patchRow(row.key, { category: value ?? '' })}
+                    onChange={(_, value) => {
+                      const name = value ?? '';
+                      const suggested = priceByCategory.get(name.trim());
+                      // Chỉ điền khi ô giá còn trống — không đè giá người dùng đã gõ.
+                      patchRow(row.key, {
+                        category: name,
+                        ...(suggested && !row.digits ? { digits: String(suggested) } : null),
+                      });
+                    }}
                     onInputChange={(_, value) => patchRow(row.key, { category: value })}
+                    renderOption={(props, option) => {
+                      const price = priceByCategory.get(option) ?? 0;
+                      const { key, ...optionProps } = props as typeof props & { key: string };
+                      return (
+                        <Box component="li" key={key} {...optionProps} sx={{ display: 'flex', gap: 1 }}>
+                          <Box component="span" sx={{ flex: 1, minWidth: 0 }}>
+                            {option}
+                          </Box>
+                          {price > 0 && (
+                            <Typography variant="caption" color="text.secondary">
+                              {formatVnd(price)}₫
+                            </Typography>
+                          )}
+                        </Box>
+                      );
+                    }}
                     renderInput={(params) => (
                       <TextField
                         {...params}

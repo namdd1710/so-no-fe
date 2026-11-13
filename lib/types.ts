@@ -90,6 +90,8 @@ export type LedgerResponse = {
   to: string | null;
   pagination: PaginationMeta;
   categories: string[];
+  /** Danh mục kèm đơn giá gần nhất để tự điền khi thêm khoản. */
+  categoryDefaults?: { name: string; unitPrice: number }[];
 };
 
 export type PublicEntry = {

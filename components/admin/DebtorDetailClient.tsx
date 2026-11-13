@@ -629,6 +629,7 @@ export default function DebtorDetailClient({ initial }: Props) {
         entry={entryDialog.entry}
         debtorId={debtor.id}
         categories={ledger.categories}
+        categoryDefaults={ledger.categoryDefaults}
         today={today}
         initialDate={entryDialog.date}
         initialStartDate={entryDialog.startDate}
