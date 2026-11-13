@@ -3,78 +3,41 @@
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import AmountField from '@/components/ledger/AmountField';
 import { formatVnd } from '@/lib/format';
 
-type Payment = {
-  provider: string;
-  debtorName: string;
-  phone: string;
-  name: string | null;
-  /** 'emvco' = QR đã có sẵn số tiền; 'link' = QR mở trang chuyển tiền MoMo. */
-  mode: 'emvco' | 'link';
-  payload: string;
-  memo: string;
-  amount: number;
-  qrDataUrl: string;
-};
+/** Ảnh QR nhận tiền MoMo đặt sẵn trong `public/`. */
+const QR_SRC = '/momo-qr.png';
+const RECEIVER_NAME = 'DO DUC NAM';
+const RECEIVER_PHONE = '0352611710';
 
 type Props = { code: string; amount: number };
 
 /**
- * Khối "Chuyển khoản MoMo" ở trang công khai: mã QR lấy từ BE + nút tự báo đã
- * chuyển khoản. Việc báo chỉ tạo lời khai chờ chủ nợ kiểm tra, không tự trừ nợ.
+ * Khối "Chuyển khoản MoMo": ảnh QR có sẵn của chủ nợ + nút tự báo đã chuyển
+ * khoản. Việc báo chỉ tạo lời khai chờ chủ nợ kiểm tra, không tự trừ nợ.
  */
 export default function PayQr({ code, amount }: Props) {
-  const [payment, setPayment] = useState<Payment | null>(null);
-  const [loading, setLoading] = useState(amount > 0);
-  const [error, setError] = useState<string | null>(null);
-
   const [open, setOpen] = useState(false);
   const [digits, setDigits] = useState('');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
-  const [sentNote, setSentNote] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  useEffect(() => {
-    if (amount <= 0) {
-      setLoading(false);
-      return;
-    }
-    let alive = true;
-    setLoading(true);
-    fetch(`/api/public/${encodeURIComponent(code)}/payment`, { cache: 'no-store' })
-      .then(async (response) => ({ ok: response.ok, data: await response.json().catch(() => null) }))
-      .then(({ ok, data }) => {
-        if (!alive) return;
-        if (!ok || !data?.qrDataUrl) {
-          setError(data?.error?.message ?? 'Không lấy được mã QR');
-          return;
-        }
-        setPayment(data as Payment);
-      })
-      .catch(() => {
-        if (alive) setError('Không kết nối được máy chủ');
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [code, amount]);
+  const memo = `SO NO ${code}`;
 
   function openDeclare() {
-    setDigits(String(payment?.amount ?? amount));
-    setNote(payment?.memo ?? '');
+    setDigits(String(amount));
+    setNote(memo);
     setOpen(true);
   }
 
@@ -97,7 +60,7 @@ export default function PayQr({ code, amount }: Props) {
       return;
     }
     setOpen(false);
-    setSentNote('Đã ghi nhận. Chủ nợ sẽ kiểm tra và xác nhận — bạn không cần làm gì thêm.');
+    setSent(true);
   }
 
   if (amount <= 0) return null;
@@ -108,71 +71,76 @@ export default function PayQr({ code, amount }: Props) {
         Chuyển khoản MoMo
       </Typography>
 
-      {loading && (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <CircularProgress size={18} />
-          <Typography variant="body2" color="text.secondary">
-            Đang tạo mã QR…
-          </Typography>
-        </Stack>
-      )}
-
-      {!loading && error && !payment && <Alert severity="warning">{error}</Alert>}
-
-      {payment && (
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'center', sm: 'flex-start' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'center', sm: 'flex-start' }}>
+        {imageError ? (
+          <Alert severity="warning" sx={{ flex: 1 }}>
+            Chưa tìm thấy ảnh QR (cần đặt file tại <code>public/momo-qr.png</code>). Bạn vẫn có thể chuyển tới số MoMo
+            bên cạnh.
+          </Alert>
+        ) : (
           <Box
             component="img"
-            src={payment.qrDataUrl}
-            alt="Mã QR chuyển khoản MoMo"
-            sx={{ width: 168, height: 168, borderRadius: 1, border: 1, borderColor: 'divider', bgcolor: '#fff' }}
+            src={QR_SRC}
+            alt="Mã QR nhận tiền MoMo"
+            onError={() => setImageError(true)}
+            sx={{
+              width: { xs: 200, sm: 176 },
+              height: 'auto',
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'divider',
+              bgcolor: '#fff',
+            }}
           />
-          <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0, width: '100%' }}>
-            <Typography variant="caption" color="text.secondary">
-              Số tiền
-            </Typography>
-            <Typography variant="h6" fontWeight={700} color="primary">
-              {formatVnd(payment.amount)}₫
-            </Typography>
-            <Typography variant="body2">
-              MoMo: <strong>{payment.phone}</strong>
-              {payment.name ? ` · ${payment.name}` : ''}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Nội dung: {payment.memo}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {payment.mode === 'emvco'
-                ? 'Quét mã bằng MoMo hoặc app ngân hàng: số tiền và nội dung đã điền sẵn.'
-                : 'Quét mã để mở trang chuyển tiền MoMo tới số này rồi nhập số tiền ở trên.'}
-            </Typography>
-          </Stack>
-        </Stack>
-      )}
+        )}
 
-      {sentNote ? (
+        <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+          <Typography variant="caption" color="text.secondary">
+            Số tiền cần trả
+          </Typography>
+          <Typography variant="h6" fontWeight={700} color="primary">
+            {formatVnd(amount)}₫
+          </Typography>
+          <Typography variant="body2">
+            MoMo: <strong>{RECEIVER_PHONE}</strong>
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {RECEIVER_NAME}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Nội dung: {memo}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Mở app MoMo hoặc app ngân hàng, quét mã rồi nhập số tiền và nội dung như trên.
+          </Typography>
+        </Stack>
+      </Stack>
+
+      {sent ? (
         <Alert severity="success" sx={{ mt: 1.5 }}>
-          {sentNote}
+          Đã ghi nhận. Chủ nợ sẽ kiểm tra và xác nhận — bạn không cần làm gì thêm.
         </Alert>
       ) : (
-        <Button variant="outlined" onClick={openDeclare} disabled={!payment} sx={{ mt: 1.5 }}>
+        <Button variant="outlined" onClick={openDeclare} sx={{ mt: 1.5 }}>
           Tôi đã chuyển khoản
         </Button>
       )}
 
-      <Dialog open={open} onClose={saving ? undefined : () => setOpen(false)} fullWidth maxWidth="xs" component="form" onSubmit={submit}>
+      <Dialog
+        open={open}
+        onClose={saving ? undefined : () => setOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        component="form"
+        onSubmit={submit}
+      >
         <DialogTitle>Báo đã chuyển khoản</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Chủ nợ sẽ đối chiếu sao kê rồi xác nhận. Sổ chỉ được trừ khi chủ nợ chốt kỳ.
             </Typography>
-            <AmountField
-              label="Số tiền đã chuyển"
-              value={digits}
-              onChange={setDigits}
-              required
-            />
+            <AmountField label="Số tiền đã chuyển" value={digits} onChange={setDigits} required />
             <Box>
               <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
                 Lời nhắn (không bắt buộc)
