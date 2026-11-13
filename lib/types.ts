@@ -1,5 +1,8 @@
 /** Kiểu dữ liệu dùng chung, phản chiếu hình dạng API của so-no-be. */
 
+/** `single` = thêm lẻ một ngày, `range` = sinh ra từ khoảng ngày. */
+export type EntryType = 'single' | 'range';
+
 export type DebtorSummary = {
   id: string;
   name: string;
@@ -25,6 +28,8 @@ export type EntryJson = {
   unitAmount: number;
   /** Số lượng (≥ 1). */
   quantity: number;
+  /** Nguồn tạo khoản. */
+  entryType: EntryType;
   note: string;
   editable: boolean;
   createdAt: string;
@@ -90,6 +95,7 @@ export type PublicEntry = {
   amount: number;
   unitAmount: number;
   quantity: number;
+  entryType: EntryType;
   note: string;
 };
 

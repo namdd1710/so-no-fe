@@ -7,6 +7,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import MoneyText from '@/components/ledger/MoneyText';
@@ -22,6 +23,8 @@ export type DayFolderEntry = {
   unitAmount?: number;
   /** Số lượng — có thể thiếu với dữ liệu cũ (coi như 1). */
   quantity?: number;
+  /** `range` = khoản sinh ra từ một lần thêm theo khoảng ngày. */
+  entryType?: 'single' | 'range';
   note: string;
 };
 
@@ -159,9 +162,19 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                       ...(index === 0 ? { borderTopColor: 'transparent' } : null),
                     }}
                   >
-                    <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
-                      {entry.category}
-                    </Typography>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
+                        {entry.category}
+                      </Typography>
+                      {entry.entryType === 'range' && (
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label="Khoảng ngày"
+                          sx={{ mt: 0.5, height: 20, fontSize: 11 }}
+                        />
+                      )}
+                    </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
                       {entry.note || '—'}
                     </Typography>
@@ -196,6 +209,14 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                         <Typography variant="body2" fontWeight={500} sx={{ wordBreak: 'break-word' }}>
                           {entry.category}
                         </Typography>
+                        {entry.entryType === 'range' && (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label="Khoảng ngày"
+                            sx={{ mt: 0.5, height: 20, fontSize: 11 }}
+                          />
+                        )}
                         {entry.note ? (
                           <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
                             {entry.note}
