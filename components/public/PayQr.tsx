@@ -14,7 +14,7 @@ import AmountField from '@/components/ledger/AmountField';
 import { formatVnd } from '@/lib/format';
 
 /** Ảnh QR nhận tiền MoMo đặt sẵn trong `public/`. */
-const QR_SRC = '/momo-qr.png';
+const QR_SRC = '/qr-momo.jpg';
 const RECEIVER_NAME = 'DO DUC NAM';
 const RECEIVER_PHONE = '0352611710';
 
@@ -74,8 +74,7 @@ export default function PayQr({ code, amount }: Props) {
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'center', sm: 'flex-start' }}>
         {imageError ? (
           <Alert severity="warning" sx={{ flex: 1 }}>
-            Chưa tìm thấy ảnh QR (cần đặt file tại <code>public/momo-qr.png</code>). Bạn vẫn có thể chuyển tới số MoMo
-            bên cạnh.
+            Chưa tìm thấy ảnh QR (cần file <code>public/qr-momo.jpg</code>). Bạn vẫn có thể chuyển tới số MoMo bên cạnh.
           </Alert>
         ) : (
           <Box
@@ -84,7 +83,8 @@ export default function PayQr({ code, amount }: Props) {
             alt="Mã QR nhận tiền MoMo"
             onError={() => setImageError(true)}
             sx={{
-              width: { xs: 200, sm: 176 },
+              width: { xs: '100%', sm: 232 },
+              maxWidth: 300,
               height: 'auto',
               borderRadius: 2,
               border: 1,
