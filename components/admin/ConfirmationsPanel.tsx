@@ -5,12 +5,17 @@ import CloseIcon from '@mui/icons-material/Close';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import MoneyText from '@/components/ledger/MoneyText';
 import { apiFetch } from '@/lib/client-api';
-import { formatDateTimeVn } from '@/lib/format';
+import { formatDateTimeVn, formatVnd } from '@/lib/format';
 import type { ConfirmationJson } from '@/lib/types';
 
 type Props = {
@@ -20,28 +25,44 @@ type Props = {
   notify: (message: string, severity?: 'success' | 'error' | 'info') => void;
 };
 
+type Target = { item: ConfirmationJson; status: 'confirmed' | 'rejected' };
+
 /**
  * Con nợ tự báo "đã chuyển khoản" ở trang công khai; đây là chỗ chủ nợ đối
- * chiếu và đánh dấu đã nhận / bỏ qua. Không tự trừ nợ — chốt kỳ vẫn là thao
- * tác riêng để tổng luôn tính lại từ entries.
+ * chiếu, viết phản hồi (con nợ đọc được) và đánh dấu đã nhận / bỏ qua. Không
+ * tự trừ nợ — chốt kỳ vẫn là thao tác riêng.
  */
 export default function ConfirmationsPanel({ debtorId, items, onChanged, notify }: Props) {
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const [target, setTarget] = useState<Target | null>(null);
+  const [reply, setReply] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const pending = items.filter((item) => item.status === 'pending');
 
-  async function resolve(id: string, status: 'confirmed' | 'rejected') {
-    setBusyId(id);
-    const result = await apiFetch(`/api/debtors/${debtorId}/confirmations/${id}`, {
+  function open(item: ConfirmationJson, status: Target['status']) {
+    setTarget({ item, status });
+    setReply(status === 'confirmed' ? '' : '');
+    setError(null);
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!target) return;
+
+    setBusy(true);
+    const result = await apiFetch(`/api/debtors/${debtorId}/confirmations/${target.item.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status: target.status, reply }),
     });
-    setBusyId(null);
+    setBusy(false);
+
     if (!result.ok) {
-      notify(result.message ?? 'Không cập nhật được', 'error');
+      setError(result.message ?? 'Không cập nhật được');
       return;
     }
-    notify(status === 'confirmed' ? 'Đã đánh dấu nhận tiền' : 'Đã bỏ qua lời báo này');
+    notify(target.status === 'confirmed' ? 'Đã đánh dấu nhận tiền' : 'Đã bỏ qua lời báo này');
+    setTarget(null);
     onChanged();
   }
 
@@ -50,8 +71,8 @@ export default function ConfirmationsPanel({ debtorId, items, onChanged, notify 
   return (
     <Stack spacing={1.25}>
       <Alert severity="info" icon={false}>
-        Con nợ báo đã chuyển khoản {pending.length} lần — kiểm tra sao kê rồi xác nhận. Xác nhận ở đây chỉ đánh dấu,
-        muốn trừ nợ hãy bấm <strong>Chốt</strong>.
+        Con nợ báo đã chuyển khoản {pending.length} lần — kiểm tra sao kê rồi xác nhận. Phản hồi bạn viết sẽ hiện ở
+        trang của con nợ. Muốn trừ nợ hãy bấm <strong>Chốt</strong>.
       </Alert>
 
       {pending.map((item) => (
@@ -73,7 +94,7 @@ export default function ConfirmationsPanel({ debtorId, items, onChanged, notify 
             </Typography>
             {item.note && (
               <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
-                {item.note}
+                “{item.note}”
               </Typography>
             )}
           </Stack>
@@ -84,8 +105,7 @@ export default function ConfirmationsPanel({ debtorId, items, onChanged, notify 
               variant="contained"
               color="success"
               startIcon={<CheckIcon />}
-              disabled={busyId === item.id}
-              onClick={() => resolve(item.id, 'confirmed')}
+              onClick={() => open(item, 'confirmed')}
             >
               Đã nhận
             </Button>
@@ -93,14 +113,61 @@ export default function ConfirmationsPanel({ debtorId, items, onChanged, notify 
               size="small"
               color="inherit"
               startIcon={<CloseIcon />}
-              disabled={busyId === item.id}
-              onClick={() => resolve(item.id, 'rejected')}
+              onClick={() => open(item, 'rejected')}
             >
               Bỏ qua
             </Button>
           </Stack>
         </Stack>
       ))}
+
+      <Dialog
+        open={Boolean(target)}
+        onClose={busy ? undefined : () => setTarget(null)}
+        fullWidth
+        maxWidth="xs"
+        component="form"
+        onSubmit={submit}
+      >
+        <DialogTitle>{target?.status === 'confirmed' ? 'Xác nhận đã nhận tiền' : 'Bỏ qua lời báo này'}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              {target ? `Con nợ báo ${formatVnd(target.item.amount)}₫ lúc ${formatDateTimeVn(target.item.declaredAt)}.` : ''}
+              {target?.status === 'confirmed'
+                ? ' Phản hồi bên dưới sẽ hiện ở trang của con nợ.'
+                : ' Bạn có thể ghi lý do để con nợ hiểu vì sao chưa thấy khoản này.'}
+            </Typography>
+
+            <TextField
+              label={target?.status === 'confirmed' ? 'Phản hồi (không bắt buộc)' : 'Lý do (không bắt buộc)'}
+              placeholder={target?.status === 'confirmed' ? 'Ví dụ: đã nhận đủ, cảm ơn' : 'Ví dụ: chưa thấy giao dịch này'}
+              value={reply}
+              onChange={(event) => setReply(event.target.value)}
+              multiline
+              minRows={2}
+              maxRows={5}
+              fullWidth
+              slotProps={{ htmlInput: { maxLength: 300 } }}
+            />
+
+            {error && <Alert severity="error">{error}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setTarget(null)} disabled={busy}>
+            Huỷ
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color={target?.status === 'confirmed' ? 'success' : 'primary'}
+            disabled={busy}
+          >
+            {busy ? 'Đang lưu…' : target?.status === 'confirmed' ? 'Xác nhận đã nhận' : 'Bỏ qua'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

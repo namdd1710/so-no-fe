@@ -107,8 +107,19 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
 
               {hasDebt ? (
                 <>
-                  <PayQr code={code} amount={data.totals.unsettled} />
-                  <FakePayButton />
+                  <PayQr
+                    code={code}
+                    amount={data.totals.unsettled}
+                    confirmations={data.confirmations ?? []}
+                  />
+                  {/* Tách hẳn khối QR ở trên để nút "Đã thanh toán" không bị hiểu
+                      nhầm là bước xác nhận chuyển khoản. */}
+                  <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                      Không dùng chuyển khoản?
+                    </Typography>
+                    <FakePayButton />
+                  </Box>
                 </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
