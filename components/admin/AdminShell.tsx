@@ -5,6 +5,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
 import PeopleIcon from '@mui/icons-material/PeopleAlt';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import AppBar from '@mui/material/AppBar';
@@ -28,7 +29,10 @@ import { apiFetch } from '@/lib/client-api';
 
 const DRAWER_WIDTH = 232;
 
-const NAV_ITEMS = [{ label: 'Con nợ', href: '/admin', icon: <PeopleIcon /> }];
+const NAV_ITEMS = [
+  { label: 'Con nợ', href: '/admin', icon: <PeopleIcon /> },
+  { label: 'Mã QR nhận tiền', href: '/admin/payment-qrs', icon: <QrCode2Icon /> },
+];
 
 function ThemeToggle() {
   const { mode, setMode, systemMode } = useColorScheme();

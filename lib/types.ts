@@ -75,6 +75,19 @@ export type PaginationMeta = {
   totalPages: number;
 };
 
+/** Ảnh QR nhận tiền chủ nợ tải lên (base64 lưu trong DB). */
+export type PaymentQrJson = {
+  id: string;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  note: string;
+  image: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 /** Con nợ tự báo đã chuyển khoản, chờ chủ nợ kiểm tra. */
 export type ConfirmationJson = {
   id: string;
