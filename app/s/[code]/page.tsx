@@ -12,6 +12,7 @@ import MoneyText from '@/components/ledger/MoneyText';
 import FakePayButton from '@/components/public/FakePayButton';
 import MonthFilter from '@/components/public/MonthFilter';
 import PaymentHistory from '@/components/public/PaymentHistory';
+import PayQr from '@/components/public/PayQr';
 import { softPaperSx } from '@/components/ui/softBlock';
 import { fetchPublic } from '@/lib/api';
 import { formatDateVn, formatMonthVn } from '@/lib/format';
@@ -105,7 +106,10 @@ export default async function PublicLedgerPage({ params, searchParams }: Props) 
               </Box>
 
               {hasDebt ? (
-                <FakePayButton />
+                <>
+                  <PayQr code={code} amount={data.totals.unsettled} />
+                  <FakePayButton />
+                </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
                   Hiện không có khoản nào chưa thanh toán.

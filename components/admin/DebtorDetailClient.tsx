@@ -31,6 +31,7 @@ import DebtorDialog from './DebtorDialog';
 import DayEditDialog from '@/components/ledger/DayEditDialog';
 import DayFolderList from '@/components/ledger/DayFolderList';
 import EntryDialog from '@/components/ledger/EntryDialog';
+import ConfirmationsPanel from './ConfirmationsPanel';
 import MoneyText from '@/components/ledger/MoneyText';
 import { DateField, MonthField } from '@/components/ui/DateField';
 import SettleDialog from '@/components/ledger/SettleDialog';
@@ -442,6 +443,13 @@ export default function DebtorDetailClient({ initial }: Props) {
                 </Button>
               </Stack>
             </Stack>
+
+            <ConfirmationsPanel
+              debtorId={debtor.id}
+              items={ledger.confirmations ?? []}
+              notify={notify}
+              onChanged={reload}
+            />
 
             {watermark && (
               <Alert severity="info" sx={{ borderRadius: 1 }}>

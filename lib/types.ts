@@ -75,6 +75,16 @@ export type PaginationMeta = {
   totalPages: number;
 };
 
+/** Con nợ tự báo đã chuyển khoản, chờ chủ nợ kiểm tra. */
+export type ConfirmationJson = {
+  id: string;
+  amount: number;
+  note: string;
+  status: 'pending' | 'confirmed' | 'rejected';
+  declaredAt: string;
+  resolvedAt: string | null;
+};
+
 export type LedgerResponse = {
   debtor: DebtorSummary;
   today: string;
@@ -92,6 +102,8 @@ export type LedgerResponse = {
   categories: string[];
   /** Danh mục kèm đơn giá gần nhất để tự điền khi thêm khoản. */
   categoryDefaults?: { name: string; unitPrice: number }[];
+  /** Các lần con nợ báo đã chuyển khoản (mới nhất trước). */
+  confirmations?: ConfirmationJson[];
 };
 
 export type PublicEntry = {
