@@ -7,11 +7,11 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
+import { DateField } from '@/components/ui/DateField';
 import { statusToggleGroupSx } from '@/components/ui/softBlock';
 import { apiFetch } from '@/lib/client-api';
 import { formatDateVn } from '@/lib/format';
@@ -95,12 +95,11 @@ export default function DayEditDialog({ open, onClose, debtorId, date, entries, 
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
 
-          <TextField
+          <DateField
             label="Chuyển sang ngày"
-            type="date"
             value={toDate}
-            onChange={(event) => setToDate(event.target.value)}
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: today } }}
+            onChange={setToDate}
+            max={today}
             fullWidth
             required
           />
@@ -122,12 +121,11 @@ export default function DayEditDialog({ open, onClose, debtorId, date, entries, 
               </ToggleButtonGroup>
 
               {mode === 'range' && (
-                <TextField
+                <DateField
                   label="Ngày bắt đầu khoảng"
-                  type="date"
                   value={startDate}
-                  onChange={(event) => setStartDate(event.target.value)}
-                  slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: toDate } }}
+                  onChange={setStartDate}
+                  max={toDate}
                   fullWidth
                   required
                 />

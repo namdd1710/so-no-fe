@@ -32,6 +32,7 @@ import DayEditDialog from '@/components/ledger/DayEditDialog';
 import DayFolderList from '@/components/ledger/DayFolderList';
 import EntryDialog from '@/components/ledger/EntryDialog';
 import MoneyText from '@/components/ledger/MoneyText';
+import { DateField, MonthField } from '@/components/ui/DateField';
 import SettleDialog from '@/components/ledger/SettleDialog';
 import {
   filledFilterFieldSx,
@@ -466,31 +467,27 @@ export default function DebtorDetailClient({ initial }: Props) {
               </ToggleButtonGroup>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
-                <TextField
-                  type="month"
+                <MonthField
                   size="small"
                   label="Lọc theo tháng"
                   value={month}
-                  onChange={(event) => changeMonth(event.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  onChange={changeMonth}
                   sx={{ width: { xs: '100%', sm: 190 }, ...filledFilterFieldSx }}
                 />
-                <TextField
-                  type="date"
+                <DateField
                   size="small"
                   label="Từ ngày"
                   value={from}
-                  onChange={(event) => changeFrom(event.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  onChange={changeFrom}
+                  max={today}
                   sx={{ width: { xs: '100%', sm: 170 }, ...filledFilterFieldSx }}
                 />
-                <TextField
-                  type="date"
+                <DateField
                   size="small"
                   label="Đến ngày"
                   value={to}
-                  onChange={(event) => changeTo(event.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  onChange={changeTo}
+                  max={today}
                   sx={{ width: { xs: '100%', sm: 170 }, ...filledFilterFieldSx }}
                 />
                 <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />

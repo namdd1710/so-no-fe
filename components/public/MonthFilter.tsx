@@ -2,8 +2,8 @@
 
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import { useRouter } from 'next/navigation';
+import { MonthField } from '@/components/ui/DateField';
 import { filledFilterFieldSx } from '@/components/ui/softBlock';
 
 export default function MonthFilter({ value, basePath }: { value: string; basePath: string }) {
@@ -15,13 +15,11 @@ export default function MonthFilter({ value, basePath }: { value: string; basePa
 
   return (
     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-      <TextField
-        type="month"
+      <MonthField
         size="small"
         label="Xem theo tháng"
         value={value}
-        onChange={(event) => go(event.target.value)}
-        slotProps={{ inputLabel: { shrink: true } }}
+        onChange={go}
         sx={{ width: 180, ...filledFilterFieldSx }}
       />
       {value && (

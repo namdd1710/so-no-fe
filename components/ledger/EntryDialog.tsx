@@ -21,6 +21,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useEffect, useMemo, useState } from 'react';
 import AmountField from './AmountField';
+import { DateField } from '@/components/ui/DateField';
 import { statusToggleGroupSx } from '@/components/ui/softBlock';
 import { apiFetch } from '@/lib/client-api';
 import { formatDateVn, formatVnd } from '@/lib/format';
@@ -226,35 +227,11 @@ export default function EntryDialog({
           </ToggleButtonGroup>
 
           {mode === 'single' ? (
-            <TextField
-              label="Ngày"
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-              slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: today } }}
-              fullWidth
-              required
-            />
+            <DateField label="Ngày" value={date} onChange={setDate} max={today} fullWidth required />
           ) : (
             <Stack direction="row" spacing={1.5}>
-              <TextField
-                label="Từ ngày"
-                type="date"
-                value={fromDate}
-                onChange={(event) => setFromDate(event.target.value)}
-                slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: today } }}
-                fullWidth
-                required
-              />
-              <TextField
-                label="Đến ngày"
-                type="date"
-                value={toDate}
-                onChange={(event) => setToDate(event.target.value)}
-                slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: today } }}
-                fullWidth
-                required
-              />
+              <DateField label="Từ ngày" value={fromDate} onChange={setFromDate} max={today} fullWidth required />
+              <DateField label="Đến ngày" value={toDate} onChange={setToDate} max={today} fullWidth required />
             </Stack>
           )}
 

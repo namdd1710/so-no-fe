@@ -9,10 +9,10 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
 import MoneyText from './MoneyText';
+import { DateField } from '@/components/ui/DateField';
 import { apiFetch } from '@/lib/client-api';
 import { formatDateVn, nextDay } from '@/lib/format';
 import type { SettlePreview } from '@/lib/types';
@@ -101,15 +101,12 @@ export default function SettleDialog({ open, onClose, debtorId, today, watermark
             Không xoá khoản nào. Sau khi chốt, &ldquo;chưa thanh toán&rdquo; chỉ còn các khoản <strong>sau</strong> ngày chốt.
           </Alert>
 
-          <TextField
+          <DateField
             label="Ngày chốt"
-            type="date"
             value={date}
-            onChange={(event) => setDate(event.target.value)}
-            slotProps={{
-              inputLabel: { shrink: true },
-              htmlInput: { min: watermark ? nextDay(watermark) : undefined, max: today },
-            }}
+            onChange={setDate}
+            min={watermark ? nextDay(watermark) : undefined}
+            max={today}
             helperText={`Kỳ tính: ${periodLabel} → ${formatDateVn(date)}`}
             fullWidth
           />
