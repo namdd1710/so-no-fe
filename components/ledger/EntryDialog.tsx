@@ -62,9 +62,10 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
 
   useEffect(() => {
     if (!open) return;
-    setMode('single');
+    // Khoản đang gắn khoảng thì mở lại đúng chế độ khoảng để sửa được cả hai đầu.
+    setMode(entry?.startDate ? 'range' : 'single');
     setDate(entry?.date ?? today);
-    setFromDate(entry?.date ?? today);
+    setFromDate(entry?.startDate ?? entry?.date ?? today);
     setToDate(entry?.date ?? today);
     setCategory(entry?.category ?? '');
     // Đơn giá hiển thị riêng; khoản cũ (chưa có unitAmount) thì lấy tổng.
@@ -104,7 +105,13 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
     }
 
     const base = { category: category.trim(), unitAmount, quantity: qty, note: note.trim() };
-    const payload = mode === 'range' ? { ...base, fromDate, toDate } : { ...base, date };
+    const payload =
+      mode === 'range'
+        ? entry
+          ? // Sửa: ngày kết thúc nằm ở `date`, ngày bắt đầu ở `startDate`.
+            { ...base, date: toDate, startDate: fromDate }
+          : { ...base, fromDate, toDate }
+        : { ...base, date, startDate: null };
 
     setSaving(true);
     const result = entry
@@ -133,8 +140,7 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
 
-          {!editing && (
-            <ToggleButtonGroup
+          <ToggleButtonGroup
               exclusive
               size="small"
               value={mode}
@@ -147,7 +153,6 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
               <ToggleButton value="single">Một ngày</ToggleButton>
               <ToggleButton value="range">Khoảng ngày</ToggleButton>
             </ToggleButtonGroup>
-          )}
 
           {mode === 'single' ? (
             <TextField
@@ -248,13 +253,8 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
 
           {mode === 'range' && (
             <Typography variant="caption" color="text.secondary">
-              Cả khoảng là một khoản duy nhất, ghi vào ngày kết thúc. Sửa/xoá một lần là xong.
-            </Typography>
-          )}
-
-          {editing && entry?.startDate && (
-            <Typography variant="caption" color="text.secondary">
-              Khoản này đang gắn khoảng {formatDateVn(entry.startDate)} → {formatDateVn(entry.endDate ?? entry.date)}.
+              Cả khoảng là một khoản duy nhất, ghi vào ngày kết thúc. Muốn thêm khoản riêng cho một ngày trong
+              khoảng thì thêm một khoản &quot;Một ngày&quot; với đúng ngày đó.
             </Typography>
           )}
         </Stack>

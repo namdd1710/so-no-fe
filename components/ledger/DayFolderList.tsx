@@ -14,10 +14,14 @@ import Typography from '@mui/material/Typography';
 import MoneyText from '@/components/ledger/MoneyText';
 import { dayRowSx } from '@/components/ui/softBlock';
 
-/** Nhãn cho khoản theo khoảng: "01/10/2026 → 11/11/2026". */
+/**
+ * Nhãn cho khoản theo khoảng: "02/10 → 30/10/2026".
+ * Ngày bắt đầu viết ngắn (dd/MM) để nhãn không bị cắt trong cột hẹp.
+ */
 function rangeLabel(entry: { startDate?: string | null; endDate?: string | null }): string {
   if (!entry.startDate) return 'Khoảng ngày';
-  return `${formatDateVn(entry.startDate)} → ${formatDateVn(entry.endDate)}`;
+  const start = formatDateVn(entry.startDate).slice(0, 5);
+  return `${start} → ${formatDateVn(entry.endDate)}`;
 }
 
 /**
