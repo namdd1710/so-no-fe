@@ -11,12 +11,17 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import MoneyText from '@/components/ledger/MoneyText';
 import { dayRowSx } from '@/components/ui/softBlock';
-import { formatDateVn, weekdayVn } from '@/lib/format';
+import { formatDateVn, formatVnd, weekdayVn } from '@/lib/format';
 
 export type DayFolderEntry = {
   id: string;
   category: string;
+  /** Tổng = unitAmount × quantity. */
   amount: number;
+  /** Đơn giá (×1) — có thể thiếu với dữ liệu cũ. */
+  unitAmount?: number;
+  /** Số lượng — có thể thiếu với dữ liệu cũ (coi như 1). */
+  quantity?: number;
   note: string;
 };
 
@@ -162,6 +167,11 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                     </Typography>
                     <Box sx={{ textAlign: 'right' }}>
                       <MoneyText amount={entry.amount} suffix="₫" />
+                      {(entry.quantity ?? 1) > 1 && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {formatVnd(entry.unitAmount ?? entry.amount)}₫ × {entry.quantity}
+                        </Typography>
+                      )}
                     </Box>
                     {hasActions && (
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>{renderActions?.(entry)}</Box>
@@ -192,7 +202,14 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                           </Typography>
                         ) : null}
                       </Box>
-                      <MoneyText amount={entry.amount} suffix="₫" fontWeight={600} display="block" />
+                      <Box sx={{ textAlign: 'right' }}>
+                        <MoneyText amount={entry.amount} suffix="₫" fontWeight={600} display="block" />
+                        {(entry.quantity ?? 1) > 1 && (
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {formatVnd(entry.unitAmount ?? entry.amount)}₫ × {entry.quantity}
+                          </Typography>
+                        )}
+                      </Box>
                     </Stack>
                     {hasActions && (
                       <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>

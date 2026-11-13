@@ -19,7 +19,12 @@ export type EntryJson = {
   id: string;
   date: string;
   category: string;
+  /** Tổng của khoản = unitAmount × quantity. */
   amount: number;
+  /** Đơn giá nhập vào (×1). */
+  unitAmount: number;
+  /** Số lượng (≥ 1). */
+  quantity: number;
   note: string;
   editable: boolean;
   createdAt: string;
@@ -83,6 +88,8 @@ export type PublicEntry = {
   date: string;
   category: string;
   amount: number;
+  unitAmount: number;
+  quantity: number;
   note: string;
 };
 
