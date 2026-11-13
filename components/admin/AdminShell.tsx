@@ -59,6 +59,18 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     router.refresh();
   }
 
+  /**
+   * "Con nợ" có href `/admin` nên nếu so khớp theo tiền tố thì mọi trang admin
+   * đều sáng cùng lúc (vừa Con nợ vừa Mã QR). Trang gốc chỉ khớp chính nó và
+   * các trang con của nó.
+   */
+  function isActive(href: string) {
+    if (href === '/admin') {
+      return pathname === '/admin' || pathname.startsWith('/admin/debtors');
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
   const nav = (
     <Box sx={{ width: DRAWER_WIDTH }} role="presentation" onClick={() => setMobileOpen(false)}>
       <Toolbar sx={{ gap: 1 }}>
@@ -74,7 +86,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
             key={item.href}
             component={Link}
             href={item.href}
-            selected={pathname === item.href || pathname.startsWith(`${item.href}/`)}
+            selected={isActive(item.href)}
             sx={{
               borderRadius: 1,
               mx: 1,
