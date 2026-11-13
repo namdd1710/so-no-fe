@@ -172,6 +172,12 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
 
       {groups.map((group) => {
         const isExpanded = Boolean(expanded[group.date]);
+        // "Chọn tất cả" riêng của ngày này — chỉ tính các khoản chọn được.
+        const groupIds = selection
+          ? group.entries.filter((entry) => entry.editable !== false).map((entry) => entry.id)
+          : [];
+        const pickedInGroup = selection ? groupIds.filter((id) => selection.selected.has(id)).length : 0;
+        const allInGroup = groupIds.length > 0 && pickedInGroup === groupIds.length;
         return (
           <Accordion
             key={group.date}
@@ -276,7 +282,18 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                   borderColor: 'divider',
                 }}
               >
-                {selectable && <Box />}
+                {selection && (
+                  <Checkbox
+                    size="small"
+                    checked={allInGroup}
+                    indeterminate={pickedInGroup > 0 && !allInGroup}
+                    disabled={groupIds.length === 0}
+                    onChange={() => selection.toggleMany(groupIds, !allInGroup)}
+                    slotProps={{ input: { 'aria-label': `Chọn tất cả khoản ngày ${formatDateVn(group.date)}` } }}
+                    title={`Chọn tất cả ${groupIds.length} khoản của ngày này`}
+                    sx={{ p: 0.25 }}
+                  />
+                )}
                 <Typography variant="caption" color="text.secondary" fontWeight={600}>
                   Danh mục
                 </Typography>
