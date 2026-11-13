@@ -1,11 +1,13 @@
 'use client';
 
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ClearIcon from '@mui/icons-material/Clear';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonBase from '@mui/material/ButtonBase';
+import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Popover from '@mui/material/Popover';
 import Stack from '@mui/material/Stack';
@@ -160,6 +162,22 @@ export function DateField({
             readOnly: true,
             endAdornment: (
               <InputAdornment position="end">
+                {value && !disabled && (
+                  <IconButton
+                    size="small"
+                    aria-label="Xoá ngày"
+                    title="Xoá ngày"
+                    onClick={(event) => {
+                      // Đừng mở lịch khi bấm nút xoá.
+                      event.stopPropagation();
+                      onChange('');
+                    }}
+                    edge="end"
+                    sx={{ mr: 0.25, color: 'text.secondary' }}
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                )}
                 <EventOutlinedIcon fontSize="small" sx={{ color: 'text.secondary' }} />
               </InputAdornment>
             ),
@@ -318,6 +336,21 @@ export function MonthField({
             readOnly: true,
             endAdornment: (
               <InputAdornment position="end">
+                {selected && !disabled && (
+                  <IconButton
+                    size="small"
+                    aria-label="Xoá tháng"
+                    title="Xoá tháng"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onChange('');
+                    }}
+                    edge="end"
+                    sx={{ mr: 0.25, color: 'text.secondary' }}
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                )}
                 <EventOutlinedIcon fontSize="small" sx={{ color: 'text.secondary' }} />
               </InputAdornment>
             ),
