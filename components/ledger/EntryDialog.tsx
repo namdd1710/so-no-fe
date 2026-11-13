@@ -1,5 +1,7 @@
 'use client';
 
+import AddIcon from '@mui/icons-material/Add';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Autocomplete from '@mui/material/Autocomplete';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -10,10 +12,12 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useEffect, useMemo, useState } from 'react';
 import AmountField from './AmountField';
@@ -37,8 +41,26 @@ type Props = {
 
 type Mode = 'single' | 'range';
 
-/** POST trả thêm `createdCount` khi thêm theo khoảng ngày. */
+/** POST trả thêm `createdCount` khi thêm nhiều khoản. */
 type SaveResponse = { entry: EntryJson; createdCount?: number };
+
+/** Một dòng nhập trong dialog — mỗi dòng thành một khoản. */
+type Row = {
+  key: string;
+  category: string;
+  /** Đơn giá, chuỗi chữ số. */
+  digits: string;
+  quantity: string;
+  negative: boolean;
+  note: string;
+};
+
+let rowSeq = 0;
+
+function emptyRow(): Row {
+  rowSeq += 1;
+  return { key: `row-${rowSeq}`, category: '', digits: '', quantity: '1', negative: false, note: '' };
+}
 
 /** Số ngày trong [from, to], tính cả hai đầu (lịch UTC cho khỏi lệch múi giờ). */
 function rangeDays(from: string, to: string): number {
@@ -46,6 +68,18 @@ function rangeDays(from: string, to: string): number {
   const end = new Date(`${to}T00:00:00Z`).getTime();
   if (Number.isNaN(start) || Number.isNaN(end)) return 0;
   return Math.round((end - start) / 86_400_000) + 1;
+}
+
+function unitOf(row: Row): number {
+  return (Number(row.digits) || 0) * (row.negative ? -1 : 1);
+}
+
+function qtyOf(row: Row): number {
+  return Math.max(1, Math.floor(Number(row.quantity) || 1));
+}
+
+function amountOf(row: Row): number {
+  return unitOf(row) * qtyOf(row);
 }
 
 export default function EntryDialog({
@@ -63,11 +97,7 @@ export default function EntryDialog({
   const [date, setDate] = useState(today);
   const [fromDate, setFromDate] = useState(today);
   const [toDate, setToDate] = useState(today);
-  const [category, setCategory] = useState('');
-  const [digits, setDigits] = useState('');
-  const [quantity, setQuantity] = useState('1');
-  const [negative, setNegative] = useState(false);
-  const [note, setNote] = useState('');
+  const [rows, setRows] = useState<Row[]>([emptyRow()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,22 +108,37 @@ export default function EntryDialog({
     setDate(entry?.date ?? initialDate ?? today);
     setFromDate(entry?.startDate ?? entry?.date ?? today);
     setToDate(entry?.date ?? today);
-    setCategory(entry?.category ?? '');
-    // Đơn giá hiển thị riêng; khoản cũ (chưa có unitAmount) thì lấy tổng.
-    setDigits(entry ? String(Math.abs(entry.unitAmount ?? entry.amount)) : '');
-    setQuantity(String(entry?.quantity ?? 1));
-    setNegative((entry?.amount ?? 0) < 0);
-    setNote(entry?.note ?? '');
+    setRows([
+      entry
+        ? {
+            ...emptyRow(),
+            category: entry.category,
+            // Đơn giá hiển thị riêng; khoản cũ (chưa có unitAmount) thì lấy tổng.
+            digits: String(Math.abs(entry.unitAmount ?? entry.amount)),
+            quantity: String(entry.quantity ?? 1),
+            negative: entry.amount < 0,
+            note: entry.note ?? '',
+          }
+        : emptyRow(),
+    ]);
     setError(null);
   }, [open, entry, today, initialDate]);
 
-  const unitAmount = (Number(digits) || 0) * (negative ? -1 : 1);
-  const qty = Math.max(1, Math.floor(Number(quantity) || 1));
-  const perDay = unitAmount * qty;
-
-  // Khoảng ngày chỉ để mô tả phạm vi — vẫn MỘT bản ghi, nên tổng = đơn giá × số lượng.
+  // Khoảng ngày chỉ để mô tả phạm vi — vẫn MỘT bản ghi cho mỗi khoản.
   const days = useMemo(() => (mode === 'range' ? rangeDays(fromDate, toDate) : 1), [mode, fromDate, toDate]);
-  const total = perDay;
+  const total = rows.reduce((sum, row) => sum + amountOf(row), 0);
+
+  function patchRow(key: string, patch: Partial<Row>) {
+    setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+  }
+
+  function addRow() {
+    setRows((prev) => [...prev, emptyRow()]);
+  }
+
+  function removeRow(key: string) {
+    setRows((prev) => (prev.length === 1 ? prev : prev.filter((row) => row.key !== key)));
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -109,27 +154,36 @@ export default function EntryDialog({
       if (days > 366) return setError('Mỗi lần chỉ thêm được tối đa 366 ngày');
     }
 
-    if (!category.trim()) return setError('Nhập danh mục');
-    if (!digits || Number(digits) === 0) return setError('Nhập đơn giá khác 0');
-    if (!Number.isInteger(Number(quantity)) || qty < 1 || qty > 1000) {
-      return setError('Số lượng phải là số nguyên từ 1 đến 1000');
+    for (const [index, row] of rows.entries()) {
+      const label = rows.length > 1 ? `Khoản ${index + 1}: ` : '';
+      if (!row.category.trim()) return setError(`${label}nhập danh mục`);
+      if (!row.digits || Number(row.digits) === 0) return setError(`${label}nhập đơn giá khác 0`);
+      if (!Number.isInteger(Number(row.quantity)) || qtyOf(row) < 1 || qtyOf(row) > 1000) {
+        return setError(`${label}số lượng phải là số nguyên từ 1 đến 1000`);
+      }
     }
 
-    const base = { category: category.trim(), unitAmount, quantity: qty, note: note.trim() };
-    const payload =
-      mode === 'range'
-        ? entry
-          ? // Sửa: ngày kết thúc nằm ở `date`, ngày bắt đầu ở `startDate`.
-            { ...base, date: toDate, startDate: fromDate }
-          : { ...base, fromDate, toDate }
-        : { ...base, date, startDate: null };
+    const items = rows.map((row) => ({
+      category: row.category.trim(),
+      unitAmount: unitOf(row),
+      quantity: qtyOf(row),
+      note: row.note.trim(),
+    }));
 
     setSaving(true);
     const result = entry
-      ? await apiFetch<SaveResponse>(`/api/entries/${entry.id}`, { method: 'PATCH', body: JSON.stringify(payload) })
+      ? await apiFetch<SaveResponse>(`/api/entries/${entry.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(
+            mode === 'range'
+              ? // Sửa: ngày kết thúc nằm ở `date`, ngày bắt đầu ở `startDate`.
+                { ...items[0], date: toDate, startDate: fromDate }
+              : { ...items[0], date, startDate: null },
+          ),
+        })
       : await apiFetch<SaveResponse>(`/api/debtors/${debtorId}/entries`, {
           method: 'POST',
-          body: JSON.stringify(payload),
+          body: JSON.stringify(mode === 'range' ? { fromDate, toDate, items } : { date, items }),
         });
     setSaving(false);
 
@@ -138,32 +192,33 @@ export default function EntryDialog({
       return;
     }
 
+    const created = result.data?.createdCount ?? 1;
     if (entry) onSaved('Đã cập nhật khoản');
-    else if ((result.data?.createdCount ?? 1) > 1) onSaved(`Đã thêm ${result.data?.createdCount} khoản`);
+    else if (created > 1) onSaved(`Đã thêm ${created} khoản`);
     else onSaved('Đã thêm khoản');
     onClose();
   }
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="xs" component="form" onSubmit={submit}>
+    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm" component="form" onSubmit={submit}>
       <DialogTitle>{editing ? 'Sửa khoản' : 'Thêm khoản'}</DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
 
           <ToggleButtonGroup
-              exclusive
-              size="small"
-              value={mode}
-              onChange={(_event, next: Mode | null) => {
-                if (next) setMode(next);
-              }}
-              aria-label="Thêm một ngày hay nhiều ngày"
-              sx={statusToggleGroupSx}
-            >
-              <ToggleButton value="single">Một ngày</ToggleButton>
-              <ToggleButton value="range">Khoảng ngày</ToggleButton>
-            </ToggleButtonGroup>
+            exclusive
+            size="small"
+            value={mode}
+            onChange={(_event, next: Mode | null) => {
+              if (next) setMode(next);
+            }}
+            aria-label="Thêm một ngày hay nhiều ngày"
+            sx={statusToggleGroupSx}
+          >
+            <ToggleButton value="single">Một ngày</ToggleButton>
+            <ToggleButton value="range">Khoảng ngày</ToggleButton>
+          </ToggleButtonGroup>
 
           {mode === 'single' ? (
             <TextField
@@ -198,73 +253,117 @@ export default function EntryDialog({
             </Stack>
           )}
 
-          <Autocomplete
-            freeSolo
-            options={categories}
-            value={category}
-            onChange={(_, value) => setCategory(value ?? '')}
-            onInputChange={(_, value) => setCategory(value)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Danh mục"
-                placeholder="Mua cơm, mua thuốc…"
-                required
-                helperText="Chọn danh mục đã dùng hoặc gõ danh mục mới"
-              />
-            )}
-          />
+          {/* ---------- Danh sách khoản ---------- */}
+          <Stack spacing={2}>
+            {rows.map((row, index) => (
+              <Box
+                key={row.key}
+                sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}
+              >
+                <Stack spacing={1.5}>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Typography variant="subtitle2" color="text.secondary">
+                      {rows.length > 1 ? `Khoản ${index + 1}` : 'Khoản'}
+                    </Typography>
+                    {!editing && rows.length > 1 && (
+                      <Tooltip title="Bỏ dòng này">
+                        <IconButton
+                          size="small"
+                          aria-label={`Bỏ khoản ${index + 1}`}
+                          onClick={() => removeRow(row.key)}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Stack>
 
-          <Stack direction="row" spacing={1.5}>
-            <Box sx={{ flex: 1 }}>
-              <AmountField value={digits} onChange={setDigits} label="Đơn giá" required error={undefined} />
-            </Box>
-            <TextField
-              label="Số lượng"
-              type="number"
-              value={quantity}
-              onChange={(event) => setQuantity(event.target.value)}
-              slotProps={{ htmlInput: { min: 1, max: 1000, inputMode: 'numeric' } }}
-              sx={{ width: 120 }}
-              helperText="×1 giá"
-            />
+                  <Autocomplete
+                    freeSolo
+                    options={categories}
+                    value={row.category}
+                    onChange={(_, value) => patchRow(row.key, { category: value ?? '' })}
+                    onInputChange={(_, value) => patchRow(row.key, { category: value })}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Danh mục"
+                        placeholder="Mua cơm, mua thuốc…"
+                        required
+                        size="small"
+                      />
+                    )}
+                  />
+
+                  <Stack direction="row" spacing={1.5}>
+                    <Box sx={{ flex: 1 }}>
+                      <AmountField
+                        value={row.digits}
+                        onChange={(digits) => patchRow(row.key, { digits })}
+                        label="Đơn giá"
+                        required
+                        error={undefined}
+                      />
+                    </Box>
+                    <TextField
+                      label="Số lượng"
+                      type="number"
+                      value={row.quantity}
+                      onChange={(event) => patchRow(row.key, { quantity: event.target.value })}
+                      slotProps={{ htmlInput: { min: 1, max: 1000, inputMode: 'numeric' } }}
+                      sx={{ width: 110 }}
+                    />
+                  </Stack>
+
+                  <TextField
+                    label="Ghi chú"
+                    value={row.note}
+                    onChange={(event) => patchRow(row.key, { note: event.target.value })}
+                    size="small"
+                    inputProps={{ maxLength: 500 }}
+                    fullWidth
+                  />
+
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={row.negative}
+                        onChange={(event) => patchRow(row.key, { negative: event.target.checked })}
+                      />
+                    }
+                    label="Khoản giảm nợ (trả trước)"
+                  />
+                </Stack>
+              </Box>
+            ))}
           </Stack>
 
-          <FormControlLabel
-            control={<Checkbox checked={negative} onChange={(event) => setNegative(event.target.checked)} />}
-            label="Khoản giảm nợ (trả trước)"
-          />
+          {!editing && (
+            <Button startIcon={<AddIcon />} onClick={addRow} sx={{ alignSelf: 'flex-start' }}>
+              Thêm khoản khác
+            </Button>
+          )}
 
-          <TextField
-            label="Ghi chú"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            multiline
-            minRows={2}
-            inputProps={{ maxLength: 500 }}
-            fullWidth
-          />
-
-          <Alert severity={negative ? 'warning' : 'info'} icon={false}>
+          <Alert severity={rows.some((row) => row.negative) ? 'warning' : 'info'} icon={false}>
             {mode === 'range' ? (
               <>
-                Một khoản cho khoảng {formatDateVn(fromDate)} → {formatDateVn(toDate)}
+                {rows.length > 1 ? `${rows.length} khoản` : 'Một khoản'} cho khoảng {formatDateVn(fromDate)} →{' '}
+                {formatDateVn(toDate)}
                 {days > 0 ? ` (${days} ngày)` : ''}
                 <br />
-                Sẽ ghi: <strong>{formatVnd(total)}₫</strong>
-                {qty > 1 && <> ({formatVnd(unitAmount)}₫ × {qty})</>}
+                Tổng sẽ ghi: <strong>{formatVnd(total)}₫</strong>
               </>
             ) : (
               <>
-                Sẽ ghi: <strong>{formatVnd(perDay)}₫</strong>
-                {qty > 1 && <> ({formatVnd(unitAmount)}₫ × {qty})</>} ngày {formatDateVn(date)}
+                {rows.length > 1 ? `${rows.length} khoản` : 'Sẽ ghi'}: <strong>{formatVnd(total)}₫</strong> ngày{' '}
+                {formatDateVn(date)}
               </>
             )}
           </Alert>
 
           {mode === 'range' && (
             <Typography variant="caption" color="text.secondary">
-              Cả khoảng là một khoản duy nhất, ghi vào ngày kết thúc. Muốn thêm khoản riêng cho một ngày trong
+              Mỗi khoản là một bản ghi phủ cả khoảng, ghi vào ngày kết thúc. Muốn thêm khoản riêng cho một ngày trong
               khoảng thì thêm một khoản &quot;Một ngày&quot; với đúng ngày đó.
             </Typography>
           )}
@@ -275,7 +374,7 @@ export default function EntryDialog({
           Huỷ
         </Button>
         <Button type="submit" variant="contained" disabled={saving}>
-          {saving ? 'Đang lưu…' : 'Lưu'}
+          {saving ? 'Đang lưu…' : rows.length > 1 && !editing ? `Lưu ${rows.length} khoản` : 'Lưu'}
         </Button>
       </DialogActions>
     </Dialog>
