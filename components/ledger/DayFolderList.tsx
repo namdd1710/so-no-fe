@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import AddIcon from '@mui/icons-material/Add';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -79,6 +80,8 @@ type Props<T extends DayFolderEntry = DayFolderEntry> = {
   variant?: 'embedded' | 'card';
   /** Admin: thêm một khoản mới cho đúng ngày này. */
   onAddToDay?: (date: string) => void;
+  /** Admin: sửa ở cấp ngày (dời ngày / đổi loại). */
+  onEditDay?: (group: DayFolderGroup<T>) => void;
   /** Chọn nhiều khoản để xoá hàng loạt (chỉ admin truyền vào). */
   selection?: {
     selected: Set<string>;
@@ -94,6 +97,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
   variant = 'card',
   selection,
   onAddToDay,
+  onEditDay,
 }: Props<T>) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const embedded = variant === 'embedded';
@@ -222,6 +226,21 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
               </Box>
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 <MoneyText amount={group.total} suffix="₫" fontWeight={700} color="primary" />
+                {onEditDay && (
+                  <Tooltip title={`Sửa ngày ${formatDateVn(group.date)}`}>
+                    <IconButton
+                      size="small"
+                      aria-label={`Sửa ngày ${formatDateVn(group.date)}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onEditDay(group);
+                      }}
+                      sx={softIconButtonSx}
+                    >
+                      <EditOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
                 {onAddToDay && (
                   <Tooltip title={`Thêm khoản cho ngày ${formatDateVn(group.date)}`}>
                     <IconButton

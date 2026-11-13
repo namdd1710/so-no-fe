@@ -28,6 +28,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import DebtorDialog from './DebtorDialog';
+import DayEditDialog from '@/components/ledger/DayEditDialog';
 import DayFolderList from '@/components/ledger/DayFolderList';
 import EntryDialog from '@/components/ledger/EntryDialog';
 import MoneyText from '@/components/ledger/MoneyText';
@@ -107,6 +108,7 @@ export default function DebtorDetailClient({ initial }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<EntryJson | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [dayEdit, setDayEdit] = useState<{ date: string; entries: EntryJson[] } | null>(null);
   const [voidTarget, setVoidTarget] = useState<SettlementJson | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -536,6 +538,7 @@ export default function DebtorDetailClient({ initial }: Props) {
                   variant="embedded"
                   selection={{ selected, toggle: toggleSelect, toggleMany: toggleSelectMany }}
                   onAddToDay={(date) => setEntryDialog({ open: true, entry: null, date })}
+                  onEditDay={(group) => setDayEdit({ date: group.date, entries: group.entries })}
                 />
                 <TablePagination
                   component="div"
@@ -641,6 +644,20 @@ export default function DebtorDetailClient({ initial }: Props) {
         onClose={() => setDebtorDialogOpen(false)}
         onSaved={(message) => {
           notify(message);
+          reload();
+        }}
+      />
+
+      <DayEditDialog
+        open={Boolean(dayEdit)}
+        debtorId={debtor.id}
+        date={dayEdit?.date ?? today}
+        entries={dayEdit?.entries ?? []}
+        today={today}
+        onClose={() => setDayEdit(null)}
+        onSaved={(message) => {
+          notify(message);
+          setDayEdit(null);
           reload();
         }}
       />
