@@ -13,6 +13,12 @@ import Typography from '@mui/material/Typography';
 import MoneyText from '@/components/ledger/MoneyText';
 import { dayRowSx } from '@/components/ui/softBlock';
 
+/** Nhãn cho khoản theo khoảng: "01/10/2026 → 11/11/2026". */
+function rangeLabel(entry: { startDate?: string | null; endDate?: string | null }): string {
+  if (!entry.startDate) return 'Khoảng ngày';
+  return `${formatDateVn(entry.startDate)} → ${formatDateVn(entry.endDate)}`;
+}
+
 /**
  * Ô số/tiền: có vách ngăn mảnh bên trái để biết số nào thuộc cột nào,
  * và kéo hết chiều cao hàng để các vách nối liền nhau.
@@ -36,8 +42,12 @@ export type DayFolderEntry = {
   unitAmount?: number;
   /** Số lượng — có thể thiếu với dữ liệu cũ (coi như 1). */
   quantity?: number;
-  /** `range` = khoản sinh ra từ một lần thêm theo khoảng ngày. */
+  /** `range` = một khoản trải trên một khoảng ngày. */
   entryType?: 'single' | 'range';
+  /** Ngày bắt đầu của khoảng (chỉ khoản `range` mới có). */
+  startDate?: string | null;
+  /** Ngày kết thúc của khoảng. */
+  endDate?: string | null;
   note: string;
 };
 
@@ -224,7 +234,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                         <Chip
                           size="small"
                           variant="outlined"
-                          label="Khoảng ngày"
+                          label={rangeLabel(entry)}
                           sx={{ mt: 0.5, height: 20, fontSize: 11 }}
                         />
                       )}
@@ -275,7 +285,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                           <Chip
                             size="small"
                             variant="outlined"
-                            label="Khoảng ngày"
+                            label={rangeLabel(entry)}
                             sx={{ mt: 0.5, height: 20, fontSize: 11 }}
                           />
                         )}

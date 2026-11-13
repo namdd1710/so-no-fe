@@ -30,6 +30,10 @@ export type EntryJson = {
   quantity: number;
   /** Nguồn tạo khoản. */
   entryType: EntryType;
+  /** Ngày bắt đầu của khoảng (null nếu khoản một ngày). */
+  startDate: string | null;
+  /** Ngày kết thúc của khoảng (null nếu khoản một ngày). */
+  endDate: string | null;
   note: string;
   editable: boolean;
   createdAt: string;
@@ -96,6 +100,8 @@ export type PublicEntry = {
   unitAmount: number;
   quantity: number;
   entryType: EntryType;
+  startDate: string | null;
+  endDate: string | null;
   note: string;
 };
 

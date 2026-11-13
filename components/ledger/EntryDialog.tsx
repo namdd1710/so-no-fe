@@ -79,8 +79,9 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
   const qty = Math.max(1, Math.floor(Number(quantity) || 1));
   const perDay = unitAmount * qty;
 
+  // Khoảng ngày chỉ để mô tả phạm vi — vẫn MỘT bản ghi, nên tổng = đơn giá × số lượng.
   const days = useMemo(() => (mode === 'range' ? rangeDays(fromDate, toDate) : 1), [mode, fromDate, toDate]);
-  const total = perDay * (days > 0 ? days : 0);
+  const total = perDay;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -231,10 +232,11 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
           <Alert severity={negative ? 'warning' : 'info'} icon={false}>
             {mode === 'range' ? (
               <>
-                {days > 0 ? `${days} ngày` : 'Khoảng ngày không hợp lệ'} · mỗi ngày{' '}
-                <strong>{formatVnd(perDay)}₫</strong>
+                Một khoản cho khoảng {formatDateVn(fromDate)} → {formatDateVn(toDate)}
+                {days > 0 ? ` (${days} ngày)` : ''}
                 <br />
-                Tổng sẽ ghi: <strong>{formatVnd(total)}₫</strong> ({formatDateVn(fromDate)} → {formatDateVn(toDate)})
+                Sẽ ghi: <strong>{formatVnd(total)}₫</strong>
+                {qty > 1 && <> ({formatVnd(unitAmount)}₫ × {qty})</>}
               </>
             ) : (
               <>
@@ -246,7 +248,13 @@ export default function EntryDialog({ open, onClose, debtorId, entry, categories
 
           {mode === 'range' && (
             <Typography variant="caption" color="text.secondary">
-              Mỗi ngày trong khoảng sẽ thành một khoản riêng, sửa/xoá được từng khoản sau khi thêm.
+              Cả khoảng là một khoản duy nhất, ghi vào ngày kết thúc. Sửa/xoá một lần là xong.
+            </Typography>
+          )}
+
+          {editing && entry?.startDate && (
+            <Typography variant="caption" color="text.secondary">
+              Khoản này đang gắn khoảng {formatDateVn(entry.startDate)} → {formatDateVn(entry.endDate ?? entry.date)}.
             </Typography>
           )}
         </Stack>
