@@ -98,10 +98,17 @@ export default function DebtorDetailClient({ initial }: Props) {
   const [snack, setSnack] = useState<Snack>({ open: false, message: '', severity: 'success' });
 
   // `date` = ngày gợi ý khi thêm mới, để nút + trong một ngày mở đúng ngày đó.
-  const [entryDialog, setEntryDialog] = useState<{ open: boolean; entry: EntryJson | null; date: string }>({
+  const [entryDialog, setEntryDialog] = useState<{
+    open: boolean;
+    entry: EntryJson | null;
+    date: string;
+    /** Ngày bắt đầu khoảng, khi thêm tiếp vào một ngày đang là khoảng. */
+    startDate: string | null;
+  }>({
     open: false,
     entry: null,
     date: initial.today,
+    startDate: null,
   });
   const [settleOpen, setSettleOpen] = useState(false);
   const [debtorDialogOpen, setDebtorDialogOpen] = useState(false);
@@ -312,7 +319,7 @@ export default function DebtorDetailClient({ initial }: Props) {
         <Tooltip title="Sửa">
           <IconButton
             size="small"
-            onClick={() => setEntryDialog({ open: true, entry, date: entry.date })}
+            onClick={() => setEntryDialog({ open: true, entry, date: entry.date, startDate: entry.startDate })}
             aria-label="Sửa khoản"
           >
             <EditOutlinedIcon fontSize="small" />
@@ -419,7 +426,7 @@ export default function DebtorDetailClient({ initial }: Props) {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => setEntryDialog({ open: true, entry: null, date: today })}
+                  onClick={() => setEntryDialog({ open: true, entry: null, date: today, startDate: null })}
                   sx={{ whiteSpace: 'nowrap' }}
                 >
                   Thêm khoản
@@ -537,7 +544,19 @@ export default function DebtorDetailClient({ initial }: Props) {
                   renderActions={entryActions}
                   variant="embedded"
                   selection={{ selected, toggle: toggleSelect, toggleMany: toggleSelectMany }}
-                  onAddToDay={(date) => setEntryDialog({ open: true, entry: null, date })}
+                  onAddToDay={(group) => {
+                    // Thừa hưởng loại của ngày: ngày đang là khoảng thì mở sẵn chế độ khoảng
+                    // với đúng ngày bắt đầu của khoản trong ngày, không rơi về "hôm nay".
+                    const ranged = group.entries.filter((entry) => entry.startDate);
+                    setEntryDialog({
+                      open: true,
+                      entry: null,
+                      date: group.date,
+                      startDate: ranged.length === group.entries.length && ranged.length > 0
+                        ? ranged.map((entry) => entry.startDate!).sort()[0]!
+                        : null,
+                    });
+                  }}
                   onEditDay={(group) => setDayEdit({ date: group.date, entries: group.entries })}
                 />
                 <TablePagination
@@ -615,7 +634,8 @@ export default function DebtorDetailClient({ initial }: Props) {
         categories={ledger.categories}
         today={today}
         initialDate={entryDialog.date}
-        onClose={() => setEntryDialog({ open: false, entry: null, date: today })}
+        initialStartDate={entryDialog.startDate}
+        onClose={() => setEntryDialog({ open: false, entry: null, date: today, startDate: null })}
         onSaved={(message) => {
           notify(message);
           reload();

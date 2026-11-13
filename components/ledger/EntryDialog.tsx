@@ -37,6 +37,8 @@ type Props = {
   onSaved: (message: string) => void;
   /** Ngày gợi ý khi thêm mới (nút + trong một ngày cụ thể). */
   initialDate?: string;
+  /** Ngày bắt đầu khoảng gợi ý — có khi ngày đó đang là khoản theo khoảng. */
+  initialStartDate?: string | null;
 };
 
 type Mode = 'single' | 'range';
@@ -91,6 +93,7 @@ export default function EntryDialog({
   today,
   onSaved,
   initialDate,
+  initialStartDate,
 }: Props) {
   const editing = Boolean(entry);
   const [mode, setMode] = useState<Mode>('single');
@@ -103,11 +106,13 @@ export default function EntryDialog({
 
   useEffect(() => {
     if (!open) return;
-    // Khoản đang gắn khoảng thì mở lại đúng chế độ khoảng để sửa được cả hai đầu.
-    setMode(entry?.startDate ? 'range' : 'single');
+    // Khoản đang gắn khoảng → mở đúng chế độ khoảng; khi thêm tiếp vào một ngày
+    // đang là khoảng thì thừa hưởng luôn ngày bắt đầu của khoản trong ngày đó.
+    const startHint = entry?.startDate ?? initialStartDate ?? null;
+    setMode(startHint ? 'range' : 'single');
     setDate(entry?.date ?? initialDate ?? today);
-    setFromDate(entry?.startDate ?? entry?.date ?? today);
-    setToDate(entry?.date ?? today);
+    setFromDate(startHint ?? entry?.date ?? initialDate ?? today);
+    setToDate(entry?.date ?? initialDate ?? today);
     setRows([
       entry
         ? {
@@ -122,7 +127,7 @@ export default function EntryDialog({
         : emptyRow(),
     ]);
     setError(null);
-  }, [open, entry, today, initialDate]);
+  }, [open, entry, today, initialDate, initialStartDate]);
 
   // Khoảng ngày chỉ để mô tả phạm vi — vẫn MỘT bản ghi cho mỗi khoản.
   const days = useMemo(() => (mode === 'range' ? rangeDays(fromDate, toDate) : 1), [mode, fromDate, toDate]);

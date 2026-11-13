@@ -79,8 +79,8 @@ type Props<T extends DayFolderEntry = DayFolderEntry> = {
    * `card` — mỗi ngày một soft card riêng, dùng khi không có khối bao ngoài.
    */
   variant?: 'embedded' | 'card';
-  /** Admin: thêm một khoản mới cho đúng ngày này. */
-  onAddToDay?: (date: string) => void;
+  /** Admin: thêm một khoản mới cho đúng ngày này (kèm loại/khoảng của ngày). */
+  onAddToDay?: (group: DayFolderGroup<T>) => void;
   /** Admin: sửa ở cấp ngày (dời ngày / đổi loại). */
   onEditDay?: (group: DayFolderGroup<T>) => void;
   /** Chọn nhiều khoản để xoá hàng loạt (chỉ admin truyền vào). */
@@ -250,7 +250,7 @@ export default function DayFolderList<T extends DayFolderEntry = DayFolderEntry>
                       onClick={(event) => {
                         // Đừng để cú bấm vừa thêm khoản vừa mở/đóng ngày.
                         event.stopPropagation();
-                        onAddToDay(group.date);
+                        onAddToDay(group);
                       }}
                       sx={softIconButtonSx}
                     >
