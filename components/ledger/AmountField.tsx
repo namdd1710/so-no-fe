@@ -14,8 +14,11 @@ type Props = {
   helperText?: string;
   required?: boolean;
   autoFocus?: boolean;
-  /** Khoá ô nhập (giá lấy theo danh mục thì không cho sửa tại đây). */
-  disabled?: boolean;
+  /**
+   * Chỉ đọc: không sửa được nhưng vẫn hiện chữ màu bình thường (giá lấy theo
+   * danh mục) — dùng `disabled` của MUI sẽ bị xám cả số tiền lẫn nhãn.
+   */
+  readOnly?: boolean;
 };
 
 /**
@@ -30,27 +33,27 @@ export default function AmountField({
   helperText,
   required,
   autoFocus,
-  disabled,
+  readOnly,
 }: Props) {
   const [focused, setFocused] = useState(false);
 
   return (
     <TextField
       label={label}
-      value={focused ? value : formatDigits(value)}
+      value={focused && !readOnly ? value : formatDigits(value)}
       onChange={(event) => onChange(digitsOnly(event.target.value))}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       InputProps={{
         endAdornment: <InputAdornment position="end">₫</InputAdornment>,
+        readOnly,
         sx: { fontVariantNumeric: 'tabular-nums' },
       }}
-      slotProps={{ htmlInput: { inputMode: 'numeric', autoComplete: 'off' } }}
+      slotProps={{ htmlInput: { inputMode: 'numeric', autoComplete: 'off', readOnly } }}
       error={Boolean(error)}
       helperText={error ?? helperText}
       required={required}
       autoFocus={autoFocus}
-      disabled={disabled}
       fullWidth
     />
   );

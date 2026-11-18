@@ -344,7 +344,7 @@ export default function EntryDialog({
                         label="Đơn giá"
                         required
                         error={undefined}
-                        disabled={lockedPrice > 0}
+                        readOnly={lockedPrice > 0}
                         helperText={
                           lockedPrice > 0
                             ? 'Giá theo danh mục — sửa ở trang Danh mục khoản'
