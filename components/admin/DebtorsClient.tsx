@@ -11,6 +11,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
+import LinearProgress from '@mui/material/LinearProgress';
 import Fab from '@mui/material/Fab';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
@@ -22,7 +23,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import DebtorDialog from './DebtorDialog';
 import MoneyText from '@/components/ledger/MoneyText';
@@ -69,11 +70,16 @@ export default function DebtorsClient({ initial }: Props) {
     [router],
   );
 
+  // Lần đầu đã có dữ liệu server render sẵn; chỉ tải lại khi đổi bộ lọc.
+  // (Trước đây effect chạy cả lúc mount nên danh sách vừa hiện đã kèm "Đang tải…".)
+  const skipFilterLoad = useRef(true);
   useEffect(() => {
-    if (includeArchived !== undefined) void load(includeArchived);
-    // Chỉ tải lại khi đổi bộ lọc; lần đầu đã có dữ liệu server.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [includeArchived]);
+    if (skipFilterLoad.current) {
+      skipFilterLoad.current = false;
+      return;
+    }
+    void load(includeArchived);
+  }, [includeArchived, load]);
 
   async function copyLink(debtor: DebtorSummary) {
     // Dựng link từ origin đang mở thay vì shareUrl của BE (BE dùng APP_BASE_URL, dễ còn localhost).
@@ -144,7 +150,7 @@ export default function DebtorsClient({ initial }: Props) {
           label="Hiện cả con nợ đã lưu trữ"
         />
 
-        {loading && (
+        {loading && debtors.length === 0 && (
           <Stack direction="row" spacing={1} alignItems="center">
             <CircularProgress size={18} />
             <Typography variant="body2" color="text.secondary">
@@ -152,6 +158,9 @@ export default function DebtorsClient({ initial }: Props) {
             </Typography>
           </Stack>
         )}
+
+        {/* Đã có danh sách thì chỉ báo bằng thanh mảnh, không chèn chữ "Đang tải…" lên trên. */}
+        {loading && debtors.length > 0 && <LinearProgress sx={{ borderRadius: 1 }} />}
 
         {!loading && debtors.length === 0 && (
           <Alert severity="info">
