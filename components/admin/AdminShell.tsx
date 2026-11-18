@@ -1,5 +1,6 @@
 'use client';
 
+import CategoryIcon from '@mui/icons-material/Category';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -31,6 +32,7 @@ const DRAWER_WIDTH = 232;
 
 const NAV_ITEMS = [
   { label: 'Con nợ', href: '/admin', icon: <PeopleIcon /> },
+  { label: 'Danh mục khoản', href: '/admin/categories', icon: <CategoryIcon /> },
   { label: 'Mã QR nhận tiền', href: '/admin/payment-qrs', icon: <QrCode2Icon /> },
 ];
 

@@ -100,6 +100,13 @@ export type ConfirmationJson = {
   resolvedAt: string | null;
 };
 
+/** Danh mục dùng chung cho mọi con nợ: tên + đơn giá cố định. */
+export type CategoryJson = {
+  id: string;
+  name: string;
+  unitPrice: number;
+};
+
 export type LedgerResponse = {
   debtor: DebtorSummary;
   today: string;
@@ -115,8 +122,8 @@ export type LedgerResponse = {
   to: string | null;
   pagination: PaginationMeta;
   categories: string[];
-  /** Danh mục kèm đơn giá gần nhất để tự điền khi thêm khoản. */
-  categoryDefaults?: { name: string; unitPrice: number }[];
+  /** Danh mục dùng chung kèm đơn giá — chọn danh mục là tự điền giá. */
+  categoryDefaults?: CategoryJson[];
   /** Các lần con nợ báo đã chuyển khoản (mới nhất trước). */
   confirmations?: ConfirmationJson[];
 };

@@ -14,13 +14,24 @@ type Props = {
   helperText?: string;
   required?: boolean;
   autoFocus?: boolean;
+  /** Khoá ô nhập (giá lấy theo danh mục thì không cho sửa tại đây). */
+  disabled?: boolean;
 };
 
 /**
  * Ô nhập tiền (BRIEF §7): `inputMode="numeric"` để mở bàn phím số trên điện thoại,
  * đang gõ thì hiện số trần, rời ô thì hiện "1.250.000".
  */
-export default function AmountField({ value, onChange, label = 'Số tiền', error, helperText, required, autoFocus }: Props) {
+export default function AmountField({
+  value,
+  onChange,
+  label = 'Số tiền',
+  error,
+  helperText,
+  required,
+  autoFocus,
+  disabled,
+}: Props) {
   const [focused, setFocused] = useState(false);
 
   return (
@@ -39,6 +50,7 @@ export default function AmountField({ value, onChange, label = 'Số tiền', er
       helperText={error ?? helperText}
       required={required}
       autoFocus={autoFocus}
+      disabled={disabled}
       fullWidth
     />
   );

@@ -19,13 +19,14 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import AmountField from './AmountField';
 import { DateField } from '@/components/ui/DateField';
 import { statusToggleGroupSx } from '@/components/ui/softBlock';
 import { apiFetch } from '@/lib/client-api';
 import { formatDateVn, formatVnd } from '@/lib/format';
-import type { EntryJson } from '@/lib/types';
+import type { CategoryJson, EntryJson } from '@/lib/types';
 
 type Props = {
   open: boolean;
@@ -34,8 +35,8 @@ type Props = {
   /** null = thêm mới, có giá trị = sửa. */
   entry: EntryJson | null;
   categories: string[];
-  /** Danh mục kèm đơn giá gần nhất — chọn là tự điền giá. */
-  categoryDefaults?: { name: string; unitPrice: number }[];
+  /** Danh mục dùng chung kèm đơn giá — chọn là tự điền giá. */
+  categoryDefaults?: CategoryJson[];
   today: string;
   onSaved: (message: string) => void;
   /** Ngày gợi ý khi thêm mới (nút + trong một ngày cụ thể). */
@@ -133,12 +134,21 @@ export default function EntryDialog({
     setError(null);
   }, [open, entry, today, initialDate, initialStartDate]);
 
-  // Đơn giá gợi ý theo danh mục, để chọn danh mục là điền sẵn giá lần trước.
+  // Đơn giá theo danh mục dùng chung: chọn danh mục là điền sẵn giá.
   const priceByCategory = useMemo(() => {
     const map = new Map<string, number>();
     for (const item of categoryDefaults ?? []) map.set(item.name, item.unitPrice);
     return map;
   }, [categoryDefaults]);
+
+  // Danh sách chọn = danh mục dùng chung (có giá); client cũ chỉ có tên thì vẫn chạy.
+  const categoryOptions = useMemo(() => {
+    const base =
+      categoryDefaults && categoryDefaults.length > 0 ? categoryDefaults.map((item) => item.name) : categories;
+    // Khoản cũ có thể mang tên danh mục đã bị xoá — vẫn phải hiện trong ô chọn.
+    if (!entry || base.includes(entry.category)) return base;
+    return [entry.category, ...base];
+  }, [categoryDefaults, categories, entry]);
 
   // Khoảng ngày chỉ để mô tả phạm vi — vẫn MỘT bản ghi cho mỗi khoản.
   const days = useMemo(() => (mode === 'range' ? rangeDays(fromDate, toDate) : 1), [mode, fromDate, toDate]);
@@ -247,7 +257,12 @@ export default function EntryDialog({
 
           {/* ---------- Danh sách khoản ---------- */}
           <Stack spacing={2}>
-            {rows.map((row, index) => (
+            {rows.map((row, index) => {
+              // Giá do danh mục quyết định khi THÊM khoản; sửa khoản cũ vẫn cho
+              // chỉnh giá để còn sửa được khoản nhập nhầm.
+              const lockedPrice = editing ? 0 : priceByCategory.get(row.category.trim()) ?? 0;
+
+              return (
               <Box
                 key={row.key}
                 sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}
@@ -271,19 +286,17 @@ export default function EntryDialog({
                   </Stack>
 
                   <Autocomplete
-                    freeSolo
-                    options={categories}
-                    value={row.category}
+                    options={categoryOptions}
+                    value={row.category || null}
                     onChange={(_, value) => {
                       const name = value ?? '';
                       const suggested = priceByCategory.get(name.trim());
-                      // Chỉ điền khi ô giá còn trống — không đè giá người dùng đã gõ.
+                      // Chọn danh mục là đơn giá tự điền theo danh mục chung.
                       patchRow(row.key, {
                         category: name,
-                        ...(suggested && !row.digits ? { digits: String(suggested) } : null),
+                        ...(suggested ? { digits: String(suggested) } : null),
                       });
                     }}
-                    onInputChange={(_, value) => patchRow(row.key, { category: value })}
                     renderOption={(props, option) => {
                       const price = priceByCategory.get(option) ?? 0;
                       const { key, ...optionProps } = props as typeof props & { key: string };
@@ -304,12 +317,15 @@ export default function EntryDialog({
                       <TextField
                         {...params}
                         label="Danh mục"
-                        placeholder="Mua cơm, mua thuốc…"
+                        placeholder="Chọn danh mục…"
                         required
                         size="small"
                       />
                     )}
                   />
+                  <Typography variant="caption" color="text.secondary">
+                    Thiếu món này? Thêm tên + đơn giá ở <Link href="/admin/categories">Danh mục khoản</Link>.
+                  </Typography>
 
                   <Stack direction="row" spacing={1.5}>
                     <Box sx={{ flex: 1 }}>
@@ -319,6 +335,8 @@ export default function EntryDialog({
                         label="Đơn giá"
                         required
                         error={undefined}
+                        disabled={lockedPrice > 0}
+                        helperText={lockedPrice > 0 ? 'Giá theo danh mục — sửa ở trang Danh mục khoản' : undefined}
                       />
                     </Box>
                     <TextField
@@ -351,7 +369,8 @@ export default function EntryDialog({
                   />
                 </Stack>
               </Box>
-            ))}
+              );
+            })}
           </Stack>
 
           {!editing && (
