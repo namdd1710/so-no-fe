@@ -286,6 +286,7 @@ export default function EntryDialog({
                   </Stack>
 
                   <Autocomplete
+                    freeSolo
                     options={categoryOptions}
                     value={row.category || null}
                     onChange={(_, value) => {
@@ -297,6 +298,8 @@ export default function EntryDialog({
                         ...(suggested ? { digits: String(suggested) } : null),
                       });
                     }}
+                    // Gõ tên mới: vẫn nhận, khi lưu server tự thêm vào danh mục chung.
+                    onInputChange={(_, value) => patchRow(row.key, { category: value })}
                     renderOption={(props, option) => {
                       const price = priceByCategory.get(option) ?? 0;
                       const { key, ...optionProps } = props as typeof props & { key: string };
@@ -324,7 +327,13 @@ export default function EntryDialog({
                     )}
                   />
                   <Typography variant="caption" color="text.secondary">
-                    Thiếu món này? Thêm tên + đơn giá ở <Link href="/admin/categories">Danh mục khoản</Link>.
+                    {lockedPrice > 0 ? (
+                      <>Giá lấy theo danh mục. Thêm/sửa giá ở <Link href="/admin/categories">Danh mục khoản</Link>.</>
+                    ) : row.category.trim() ? (
+                      <>Danh mục mới — nhập đơn giá, khi lưu sẽ tự thêm vào <Link href="/admin/categories">Danh mục khoản</Link>.</>
+                    ) : (
+                      <>Gõ tên mới nếu chưa có trong danh sách — sẽ tự tạo danh mục khi lưu.</>
+                    )}
                   </Typography>
 
                   <Stack direction="row" spacing={1.5}>
@@ -336,7 +345,13 @@ export default function EntryDialog({
                         required
                         error={undefined}
                         disabled={lockedPrice > 0}
-                        helperText={lockedPrice > 0 ? 'Giá theo danh mục — sửa ở trang Danh mục khoản' : undefined}
+                        helperText={
+                          lockedPrice > 0
+                            ? 'Giá theo danh mục — sửa ở trang Danh mục khoản'
+                            : row.category.trim()
+                              ? 'Đơn giá của danh mục mới'
+                              : undefined
+                        }
                       />
                     </Box>
                     <TextField
