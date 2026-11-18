@@ -226,7 +226,21 @@ export default function EntryDialog({
   }
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm" component="form" onSubmit={submit}>
+    <Dialog
+      open={open}
+      onClose={saving ? undefined : onClose}
+      fullWidth
+      maxWidth="sm"
+      component="form"
+      onSubmit={submit}
+      // Enter trong ô danh mục chỉ để chọn gợi ý. Dialog là <form> nên Enter ở
+      // đó trước đây submit luôn và đóng modal ngay khi vừa chọn danh mục xong.
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter') return;
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('[data-category-input]')) event.preventDefault();
+      }}
+    >
       <DialogTitle>{editing ? 'Sửa khoản' : 'Thêm khoản'}</DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
@@ -319,6 +333,7 @@ export default function EntryDialog({
                     renderInput={(params) => (
                       <TextField
                         {...params}
+                        inputProps={{ ...params.inputProps, 'data-category-input': 'true' }}
                         label="Danh mục"
                         placeholder="Chọn danh mục…"
                         required
